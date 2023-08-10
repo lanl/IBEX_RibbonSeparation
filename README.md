@@ -35,7 +35,6 @@ After R is installed, run **generate_figures_simulated.R** to reproduce Figures 
 
 Users may need to setwd('Path/to/Theseus/Directory/') in line 34 of both **.R** files.
 
-
 ## Data Details
 
 ### data_illustration.RDS
