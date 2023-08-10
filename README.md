@@ -21,7 +21,9 @@ Installation should take less than 15 minutes on a normal desktop computer.
 
 ## Demonstration
 
+The ribbon separation method is demonstrated using three separate data products: IBEX Science Operations Center (ISOC) public-release 6-degree maps, higher-resolution 2-degree maps using the recently-published Theseus method (https://arxiv.org/abs/2210.12005), and simulated data maps. These input data products are provided in **inputs_isoc.RDS**, **inputs_theseus.RDS**, and **inputs_simulated.RDS**, respectively. 
 
+The **.R** files **run_separations_isoc.R**, **run_separations_theseus.R**, and **run_separations_simulated.R** will run the ribbon separation algorithm on each of the three data products. These ribbon separations may take several hours to run. The resulting ribbon separations are stored in **outputs_isoc.RDS**, **outputs_theseus.RDS**, and **outputs_simulated.RDS**
 
 
 A reduced data set is provided, named **data_illustration.RDS**. This example code will reproduce Figures 2, 3, 4, 6, and 7 of the manuscript, "Towards Improved Heliosphere Sky Map Estimation with Theseus". The R code to produce the figures is **theseus_illustration.R** and will source in the functions found within **theseus_functions.R**. This should only take 1-2 minutes to run. 
