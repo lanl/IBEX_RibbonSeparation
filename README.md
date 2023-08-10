@@ -6,7 +6,7 @@ Minimal working example for IBEX ribbon separation method in Beesley et al. (202
 
 NASA’s Interstellar Boundary Explorer (IBEX) satellite collects data on energetic neutral atoms (ENAs) that can provide insight into the heliosphere boundary between our solar system and interstellar space. From these data, researchers construct maps of the ENA intensities (often, expressed in terms of flux) observed by latitude and longitude. The ENA flux observed in these maps is believed to come from at least two distinct sources: one source which manifests as a ribbon of concentrated ENA flux and one source (or possibly several) that manifest as smoothly-varying globally-distributed flux (GDF). Each ENA source type and its corresponding ENA intensity map is of separate scientific interest.
 
-This code demonstrates the ribbon separation method proposed in Beesley et al. (2023). This method takes a pre-make ENA intensity or flux map and corresponding uncertainties as the input and outputs a ribbon/GDF partitioned version of this same map with corresponding standard errors, which propagate uncertainty in both the input map and uncertainty in the map partitioning. Beesley et al. (2023) defines a two-stage separation algorithm, where the first stage defines a ribbon "mask" region (i.e., a region possibly containing ribbon flux) and the second stage predicts the GDF flux underneath the ribbon in the mask region. This separation procedure is repeated multiple times for a given input map, and the final separation is obtained as a weighted combination of the best 25% of separations according to a goodness-of-separation heuristic.
+This code demonstrates the ribbon separation method proposed in Beesley et al. (2023). This method takes a pre-make ENA intensity or flux map and corresponding uncertainties as the input and outputs a ribbon/GDF partitioned version of this same map with corresponding standard errors, which propagate uncertainty in both the input map and uncertainty in the map partitioning. Beesley et al. (2023) defines a two-stage separation algorithm, where the first stage defines a ribbon "mask" region (i.e., a region possibly containing ribbon flux) and the second stage predicts the GDF flux underneath the ribbon in the mask region. This separation procedure is repeated multiple times for a given input map, and the final separation is obtained as a weighted combination of the best 25% of separations according to a goodness-of-separation heuristic. This code also implements the ribbon center estimation algorithm proposed in Beesley et al. (2023).
 
 ## System requirements
 
@@ -23,19 +23,23 @@ Installation should take less than 15 minutes on a normal desktop computer.
 
 The ribbon separation method is demonstrated using three separate data products: IBEX Science Operations Center (ISOC) public-release 6-degree maps, higher-resolution 2-degree maps using the recently-published Theseus method (https://arxiv.org/abs/2210.12005), and simulated data maps. These input data products are provided in **inputs_isoc.RDS**, **inputs_theseus.RDS**, and **inputs_simulated.RDS**, respectively. 
 
-The **.R** files **run_separations_isoc.R**, **run_separations_theseus.R**, and **run_separations_simulated.R** will run the ribbon separation algorithm on each of the three data products. These ribbon separations may take several hours to run. The resulting ribbon separations are stored in **outputs_isoc.RDS**, **outputs_theseus.RDS**, and **outputs_simulated.RDS**
+The **.R** files **run_separations_isoc.R**, **run_separations_theseus.R**, and **run_separations_simulated.R** will run the ribbon separation algorithm on each of the three data products. These ribbon separations may take several hours to run, but the results are pre-populated. 
 
 
-A reduced data set is provided, named **data_illustration.RDS**. This example code will reproduce Figures 2, 3, 4, 6, and 7 of the manuscript, "Towards Improved Heliosphere Sky Map Estimation with Theseus". The R code to produce the figures is **theseus_illustration.R** and will source in the functions found within **theseus_functions.R**. This should only take 1-2 minutes to run. 
 
-The binned direct event data for the ESA 4 "A" maps along with the Theseus and ISOC sky map estimates are provided in **data_results.RDS**. The code to reproduce Figures 13 and 14 of the manuscript is **theseus_results.R** 
+The resulting ribbon separations are stored in **separations_isoc.RDS**, **separations_theseus.RDS**, and **separations_simulated.RDS**. The script **run_centers_simulated.R** will apply the proposed ribbon center estimation method to simulated data, and the outputs are stored in **centers_simulated.RDS**.
+
+The example code **generate_figures_simulated.R** will reproduce Figures XX-XX in the manuscript. Script **generate_figures_realdata.R** will reproduce Figures XX-XX. 
 
 NOTE: Anyone wishing to use these maps **for space science** (not statistical methodological development) should contact the LANL IBEX team first (email dreisenfeld@lanl.gov). Additional data corrections (e.g., for the Compton-Getting effect) are advised.
+
+## Reproducing results in Beesley et al. (2023)
+
 
 
 ## Instructions for use
 
-After R is installed, run **theseus_illustration.R** to reproduce Figures 2, 3, 4, 6, and 7, or run **theseus_results.R** to reproduce Figures 13 and 14. 
+After R is installed, run **generate_figures_simulated.R** to reproduce Figures XX-XX, or run **generate_figures_realdata.R** to reproduce Figures XX-XX. 
 
 Users may need to setwd('Path/to/Theseus/Directory/') in line 34 of both **.R** files.
 
@@ -66,8 +70,6 @@ There are **5** data products in **data_illustration.RDS**.
 - wt_pix: is proportional to the size of the pixel (area on a unit sphere) where larger pixels are near ecliptic_latitude 0 and smaller pixels are near ecliptic latitudes -90 and 90 and is used in `glmnet()`
 
 **Xpsf** is a nrow(Xobs) by nrow(Xpix) sparse matrix where each entry is non-neagative and each row sums to 1. It is used to relate the unblurred sky map to the blurred binned direct events.
-
-**KK** is an nrow(Xpix) by nrow(Xpix) sparse matrix where each entry is non-negative and each row sums to 1. It is used to relate the unblurred sky map to the blurred sky map.
 
 **ibex_palette** is a 4 column data frame containing the pixel color information to plot sky maps:
 - red: red numeric value
