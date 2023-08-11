@@ -21,19 +21,17 @@ Installation should take less than 15 minutes on a normal desktop computer.
 
 ## Demonstration
 
-The ribbon separation method is demonstrated using three separate data products: IBEX Science Operations Center (ISOC) public-release 6-degree maps, higher-resolution 2-degree maps using the recently-published Theseus method (https://arxiv.org/abs/2210.12005), and simulated data maps. These input data products are provided in **inputs_isoc.RDS**, **inputs_theseus.RDS**, and **inputs_simulated.RDS**, respectively. The resulting ribbon separations and corresponding ribbon center estimates (as needed) are stored in **separations_isoc.RDS**, **separations_theseus.RDS**, and **separations_simulated.RDS**. 
+The ribbon separation method is demonstrated using two real data products: IBEX Science Operations Center (ISOC) public-release 6-degree maps and higher-resolution 2-degree maps using the recently-published Theseus method (https://arxiv.org/abs/2210.12005). These input data products are provided in **inputs_isoc.csv** and **inputs_theseus.csv**, respectively. The resulting ribbon separations and corresponding ribbon center estimates (Theseus only) are stored in ecliptic coordinates in **output_isoc_ecliptic.csv** and **output_theseus_ecliptic.csv**. Results in ribbon-centric coordinates are provided in in **output_isoc_rc.csv** and **output_theseus_rc.csv**. 
 
-Code used to generate these ribbon separations is provided in **.R** files **run_separations_isoc.R**, **run_separations_theseus.R**, and **run_separations_simulated.R**. Users wishing to reproduce these separations locally should expect the code to take ~ 12 hours to run.
+Code used to generate these real data ribbon separations is provided in **.R** files **run_separations_isoc.R** and **run_separations_theseus.R**. Users wishing to reproduce these separations locally should expect the code to take ~ 12 hours to run. Although code for performing the simulated data separations is not provided, results of these map separations are provided in **output_simulated_ecliptic.csv** and **output_simulated_rc.csv**. 
 
-The **R** scriipts **generate_figures_simulated.R** and  **generate_figures_realdata.R** will reproduce Figures XX-XX and Figures XX-XX in the manuscript, respectively. 
+The **R** scripts **generate_figures_simulated.R** and **generate_figures_realdata.R** will reproduce Figures XX-XX and Figures XX-XX in the manuscript, respectively. 
 
 NOTE: Anyone wishing to use these maps **for space science** (not statistical methodological development) should contact the LANL IBEX team first (email dreisenfeld@lanl.gov). Additional data corrections (e.g., for the Compton-Getting effect) are advised.
 
 ## Instructions for use
 
-After R is installed, run **generate_figures_simulated.R** to reproduce Figures XX-XX, or run **generate_figures_realdata.R** to reproduce Figures XX-XX. Users wishing to reproduce the ribbon separations stored in **separations_xx.RDS** may run **run_separations_isoc.R**, **run_separations_theseus.R**, and/or **run_separations_simulated.R**
-
-Users may need to setwd('Path/to/Theseus/Directory/') in line 34 of both **.R** files.
+After R is installed, run **generate_figures_simulated.R** to reproduce Figures XX-XX, or run **generate_figures_realdata.R** to reproduce Figures XX-XX. Users wishing to reproduce the ribbon separations stored in **output_isoc_xx.csv** and/or **output_theseus_xx.csv** may run **run_separations_isoc.R** and/or **run_separations_theseus.R**. Users will need to reset the "current_directory" file path in the **run_separations_xx.R** scripts. 
 
 ## Data Details
 
