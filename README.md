@@ -67,7 +67,7 @@ After R is installed, all of the Theseus and simulated data files stored in this
 - ESA: energy step (2-5) for map
 - Time_Group: time period of map, where "A" denotes the first 6 months of the year for Theseus maps
 
-**output_simulations_rc.csv** and **output_simulations_ecliptic.csv** are 17 column data frames containing the ribbon-separated simulated data in ribbon-centered and ecliptic coordinates, respectively. The ribbon center was fixed to the simulation truth of of longitude 221.5 and latitude 39.
+**output_simulations_rc.csv** and **output_simulations_ecliptic.csv** are 13 column data frames containing the ribbon-separated simulated data in ribbon-centered and ecliptic coordinates, respectively. The ribbon center was fixed to the simulation truth of of longitude 221.5 and latitude 39.
 - lon: is the ecliptic or ribbon-centered longitude (between 0 and 360)
 - lat: is the ecliptic or ribbon-centered (between -90 and 90)
 - est_gdf: estimated ENA rate contribution from the globally-distributed flux (GDF)
@@ -76,10 +76,6 @@ After R is installed, all of the Theseus and simulated data files stored in this
 - se_ribbon: standard error of ribbon ENA rate
 - input_data: ENA rate in the input data, by definition equals est_gdf + est_ribbon
 - input_data_se: standard error of ENA rate in the input data, provided alongside input data
-- est_gdf_reisenfeld: estimated ENA rate contribution from the globally-distributed flux (GDF) from Reisenfeld et al. (2021) method
-- se_gdf_reisenfeld: standard error of GDF ENA rate from Reisenfeld et al. (2021) method
-- est_ribbon_reisenfeld: estimated ENA rate contribution from the ribbon from Reisenfeld et al. (2021) method
-- se_ribbon_reisenfeld: standard error of ribbon ENA rate from Reisenfeld et al. (2021) method
 - truth_gdf: simulation truth GDF-only ENA rate
 - truth_ribbon: simulation truth ribbon-only ENA rate
 - ESA: ESA (2-5) of real data map used to generate the simulated binned data structure used by Thesesus. Equals "noesa" for simulation truth maps (i.e., not estimated by Theseus).
