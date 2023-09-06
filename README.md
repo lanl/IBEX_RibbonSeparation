@@ -19,8 +19,6 @@ To downloading and install software and packages:
 
 Installation should take less than 15 minutes on a normal desktop computer.
 
-All of the Theseus and simulated data files stored in this repository are zipped for storage on Github. These files must be unzipped locally prior to running the code. 
-
 ## Demonstration
 
 The ribbon separation method is demonstrated using two real data products: IBEX Science Operations Center (ISOC) public-release 6-degree maps and higher-resolution 2-degree maps using the recently-published Theseus method (https://arxiv.org/abs/2210.12005). These input data products are provided in **input_isoc.csv** and **input_theseus.csv**, respectively. The resulting ribbon separations and corresponding ribbon center estimates (Theseus only) are stored in ecliptic coordinates in **output_isoc_ecliptic.csv** and **output_theseus_ecliptic.csv**. Results in ribbon-centric coordinates are provided in **output_isoc_rc.csv** and **output_theseus_rc.csv**. Results using method in Reisenfeld et al. (2021) are stored in **output_isoc_xx_reisenfeld.csv** and **output_theseus_xx_reisenfeld.csv** files. 
@@ -33,7 +31,7 @@ NOTE: Anyone wishing to use these maps **for space science** (not statistical me
 
 ## Instructions for use
 
-After R is installed, all of the Theseus and simulated data files stored in this repository must be unzipped locally prior to running the code. Then, run **plot_simulated.R** to reproduce many simulated data results, or run **plot_realdata.R** to reproduce all of the real data results in the manuscript and more. Users wishing to reproduce the ribbon separations stored in **output_isoc_xx.csv** and/or **output_theseus_xx.csv** may run **run_separations_isoc.R** and/or **run_separations_theseus.R**. Users will need to reset the "current_directory" file path in the **run_separations_xx.R** scripts. 
+After R is installed, run **plot_simulated.R** to reproduce many simulated data results, or run **plot_realdata.R** to reproduce all of the real data results in the manuscript and more. Users wishing to reproduce the ribbon separations stored in **output_isoc_xx.csv** and/or **output_theseus_xx.csv** may run **run_separations_isoc.R** and/or **run_separations_theseus.R**. Users will need to reset the "current_directory" file path in the **run_separations_xx.R** scripts. 
 
 ## Input Data Details
 
