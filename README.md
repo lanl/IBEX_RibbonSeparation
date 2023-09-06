@@ -94,7 +94,7 @@ After R is installed, run **plot_simulated.R** to reproduce many simulated data 
 
 If you use these ribbon separations or code in your research work, please cite the following paper:
 
-Lauren J. Beesley, Dave Osthus, Kelly R. Moran, Madeline A. Ausdemore, Grant David Meadors, Paul H. Janzen, Eric J. Zirnstein, Brian P. Weaver, Daniel B. Reisenfeld. Statistical methods for partitioning ribbon and globally-distributed flux using data from the Interstellar Boundary Explorer. [Under consideration at JASA Applications and Case Studies](https://arxiv.org/abs/2302.03089).
+Lauren J. Beesley, Dave Osthus, Kelly R. Moran, Madeline A. Ausdemore, Grant David Meadors,  Thomas K. Kim, Sung Jun Noh, Nehpreet K. Walia, Paul H. Janzen, Eric J. Zirnstein, Brian P. Weaver, Daniel B. Reisenfeld. Statistical methods for partitioning ribbon and globally-distributed flux using data from the Interstellar Boundary Explorer. [Under consideration at JASA Applications and Case Studies](https://arxiv.org/abs/2302.03089).
 
 ---
 Copyright 2023 for **CO4627**
