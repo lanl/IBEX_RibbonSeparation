@@ -53,15 +53,15 @@ After R is installed, run **plot_simulated.R** to reproduce many simulated data 
 
 ## Output Data Details
 
-**output_isoc_rc.csv** and **output_isoc_ecliptic.csv** are 10 column data frames containing the ribbon-separated ISOC data in ribbon-centered and ecliptic coordinates, respectively. A ribbon center of longitude 221 and latitude 39 was assumed. **output_theseus_rc.csv** and **output_theseus_ecliptic.csv** are also 10 column data frames containing the ribbon-separated Theseus data in ribbon-centered and ecliptic coordinates, respectively. For Theseus, ribbon-centric rotational frames were determined using the ESA 4 total ENA rate map for each year.
+**output_isoc_rc.csv** and **output_isoc_ecliptic.csv** are 10 column data frames containing the ribbon-separated ISOC data in ribbon-centered and ecliptic coordinates, respectively. A ribbon center of longitude 221 and latitude 39 was assumed. **output_theseus_rc.csv** and **output_theseus_ecliptic.csv** are also 8 column data frames containing the ribbon-separated Theseus data in ribbon-centered and ecliptic coordinates, respectively. For Theseus, ribbon-centric rotational frames were determined using the ESA 4 total ENA rate map for each year.
 - lon: is the ecliptic or ribbon-centered longitude (between 0 and 360)
 - lat: is the ecliptic or ribbon-centered (between -90 and 90)
 - est_gdf: estimated ENA rate contribution from the globally-distributed flux (GDF)
 - se_gdf: standard error of GDF ENA rate
 - est_ribbon: estimated ENA rate contribution from the ribbon
 - se_ribbon: standard error of ribbon ENA rate
-- input_data: ENA rate in the input data, by definition equals est_gdf + est_ribbon
-- input_data_se: standard error of ENA rate in the input data, provided alongside input data
+- input_data: ENA rate in the input data, by definition equals est_gdf + est_ribbon (ISOC only)
+- input_data_se: standard error of ENA rate in the input data, provided alongside input data (ISOC only)
 - ESA: energy step (2-5) for map
 - Time_Group: time period of map, where "A" denotes the first 6 months of the year for Theseus maps
 
