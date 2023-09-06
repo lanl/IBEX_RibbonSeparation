@@ -21,17 +21,17 @@ Installation should take less than 15 minutes on a normal desktop computer.
 
 ## Demonstration
 
-The ribbon separation method is demonstrated using two real data products: IBEX Science Operations Center (ISOC) public-release 6-degree maps and higher-resolution 2-degree maps using the recently-published Theseus method (https://arxiv.org/abs/2210.12005). These input data products are provided in **inputs_isoc.csv** and **inputs_theseus.csv**, respectively. The resulting ribbon separations and corresponding ribbon center estimates (Theseus only) are stored in ecliptic coordinates in **output_isoc_ecliptic.csv** and **output_theseus_ecliptic.csv**. Results in ribbon-centric coordinates are provided in in **output_isoc_rc.csv** and **output_theseus_rc.csv**. 
+The ribbon separation method is demonstrated using two real data products: IBEX Science Operations Center (ISOC) public-release 6-degree maps and higher-resolution 2-degree maps using the recently-published Theseus method (https://arxiv.org/abs/2210.12005). These input data products are provided in **input_isoc.csv** and **input_theseus.csv**, respectively. The resulting ribbon separations and corresponding ribbon center estimates (Theseus only) are stored in ecliptic coordinates in **output_isoc_ecliptic.csv** and **output_theseus_ecliptic.csv**. Results in ribbon-centric coordinates are provided in **output_isoc_rc.csv** and **output_theseus_rc.csv**. Results using method in Reisenfeld et al. (2021) are stored in **output_xx_reisenfed.csv** files. 
 
-Code used to generate these real data ribbon separations is provided in **.R** files **run_separations_isoc.R** and **run_separations_theseus.R**. Users wishing to reproduce these separations locally should expect the code to take ~ 12 hours to run. Although code for performing the simulated data separations is not provided, results of these map separations are provided in **output_simulated_ecliptic.csv** and **output_simulated_rc.csv**. 
+Code used to generate these real data ribbon separations is provided in **.R** files **run_separations_isoc.R** and **run_separations_theseus.R**. Users wishing to reproduce these separations locally should expect the code to take ~ 12 hours to run. Although code for performing the simulated data separations is not provided, results of these map separations are provided in **output_simulations_ecliptic.csv** and **output_simulations_rc.csv**. These files also contain the separations using the method in Reisenfeld et al. (2021).
 
-The **R** scripts **generate_figures_simulated.R** and **generate_figures_realdata.R** will reproduce Figures XX-XX and Figures XX-XX in the manuscript, respectively. 
+The **R** scripts **plot_simulated.R** and **plot_realdata.R** will reproduce many of the figures in the manuscript and supplement. 
 
 NOTE: Anyone wishing to use these maps **for space science** (not statistical methodological development) should contact the LANL IBEX team first (email dreisenfeld@lanl.gov). Additional data corrections (e.g., for the Compton-Getting effect) are advised.
 
 ## Instructions for use
 
-After R is installed, run **generate_figures_simulated.R** to reproduce Figures XX-XX, or run **generate_figures_realdata.R** to reproduce Figures XX-XX. Users wishing to reproduce the ribbon separations stored in **output_isoc_xx.csv** and/or **output_theseus_xx.csv** may run **run_separations_isoc.R** and/or **run_separations_theseus.R**. Users will need to reset the "current_directory" file path in the **run_separations_xx.R** scripts. 
+After R is installed, run **plot_simulated.R** to reproduce many simulated data results, or run **plot_realdata.R** to reproduce all of the real data results in the manuscript and more. Users wishing to reproduce the ribbon separations stored in **output_isoc_xx.csv** and/or **output_theseus_xx.csv** may run **run_separations_isoc.R** and/or **run_separations_theseus.R**. Users will need to reset the "current_directory" file path in the **run_separations_xx.R** scripts. 
 
 ## Input Data Details
 
@@ -40,7 +40,7 @@ After R is installed, run **generate_figures_simulated.R** to reproduce Figures 
 - lat: is the ecliptic latitude (between -90 and 90)
 - ena_rate: estimated ENA rate provided by ISOC
 - sd_ena_rate: standard error for the ENA rate
-- ESA: energy step (2-5) for map
+- ESA: energy step (2-6) for map
 - Time_Group: year of map
 
 **input_theseus.csv** is an 6 column data frame containing Theseus method (https://arxiv.org/abs/2210.12005) map separations. These maps correspond to combined ram/antiram maps for the first 6 months of each year from 2009-2019. No additional data corrections (e.g., flux, survival probability or Compton-Getting effect) were applied. Code for Theseus map generation is provided at https://github.com/lanl/Theseus. 
@@ -48,8 +48,8 @@ After R is installed, run **generate_figures_simulated.R** to reproduce Figures 
 - lat: is the ecliptic latitude (between -90 and 90)
 - ena_rate: estimated ENA rate generated by Theseus method
 - sd_ena_rate: standard error for the ENA rate
-- ESA: energy step (2-5) for map
-- Time_Group: year of map
+- ESA: energy step (2-6) for map
+- Time_Group: year of map. 'A' denotes that maps correspond to the first 6 months of each year.
 
 ## Output Data Details
 
@@ -65,7 +65,7 @@ After R is installed, run **generate_figures_simulated.R** to reproduce Figures 
 - ESA: energy step (2-5) for map
 - Time_Group: time period of map, where "A" denotes the first 6 months of the year for Theseus maps
 
-**output_simulated_rc.csv** and **output_simulated_ecliptic.csv** are 11 column data frames containing the ribbon-separated simulated data in ribbon-centered and ecliptic coordinates, respectively. The ribbon center was fixed to the simulation truth of of longitude 221.5 and latitude 39.
+**output_simulations_rc.csv** and **output_simulations_ecliptic.csv** are 17 column data frames containing the ribbon-separated simulated data in ribbon-centered and ecliptic coordinates, respectively. The ribbon center was fixed to the simulation truth of of longitude 221.5 and latitude 39.
 - lon: is the ecliptic or ribbon-centered longitude (between 0 and 360)
 - lat: is the ecliptic or ribbon-centered (between -90 and 90)
 - est_gdf: estimated ENA rate contribution from the globally-distributed flux (GDF)
@@ -74,6 +74,12 @@ After R is installed, run **generate_figures_simulated.R** to reproduce Figures 
 - se_ribbon: standard error of ribbon ENA rate
 - input_data: ENA rate in the input data, by definition equals est_gdf + est_ribbon
 - input_data_se: standard error of ENA rate in the input data, provided alongside input data
+- est_gdf_reisenfeld: estimated ENA rate contribution from the globally-distributed flux (GDF) from Reisenfeld et al. (2021) method
+- se_gdf_reisenfeld: standard error of GDF ENA rate from Reisenfeld et al. (2021) method
+- est_ribbon_reisenfeld: estimated ENA rate contribution from the ribbon from Reisenfeld et al. (2021) method
+- se_ribbon_reisenfeld: standard error of ribbon ENA rate from Reisenfeld et al. (2021) method
+- truth_gdf: simulation truth GDF-only ENA rate
+- truth_ribbon: simulation truth ribbon-only ENA rate
 - ESA: ESA (2-5) of real data map used to generate the simulated binned data structure used by Thesesus. Equals "noesa" for simulation truth maps (i.e., not estimated by Theseus).
 - MAP_CLASS: simulated ribbon profile associated with map (weakscattering, spatialretention, or varyingprofile)
 - MAP_STAT: indicates were map corresponds to simulation truth, a Theseus map estimate using simulated data with standard follow-up times, or a Theseus map estimate using simulated data with triple the observed data follow-up times (truth, amountstandard, or amount3x)
