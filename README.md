@@ -10,7 +10,7 @@ This code demonstrates the ribbon separation method proposed in Beesley et al. (
 
 ## System requirements
 
-The code is supported on all operating systems for which the requisite downloads (see below) are possible. The example code was tested on a MacBook Pro running macOS Monterey 12.6.3, using R version 4.2.2.
+The code is supported on all operating systems for which the requisite downloads (see below) are possible. The example code was tested on a MacBook Pro running macOS Big Sur 11.7.8, using R version 4.2.0.
 
 ## Installation
 
@@ -18,6 +18,8 @@ To downloading and install software and packages:
  - R (>= 2.14.0) follow instructions at https://www.r-project.org/
 
 Installation should take less than 15 minutes on a normal desktop computer.
+
+All of the Theseus and simulated data files stored in this repository are zipped for storage on Github. These files must be unzipped locally prior to running the code. 
 
 ## Demonstration
 
@@ -31,7 +33,7 @@ NOTE: Anyone wishing to use these maps **for space science** (not statistical me
 
 ## Instructions for use
 
-After R is installed, run **plot_simulated.R** to reproduce many simulated data results, or run **plot_realdata.R** to reproduce all of the real data results in the manuscript and more. Users wishing to reproduce the ribbon separations stored in **output_isoc_xx.csv** and/or **output_theseus_xx.csv** may run **run_separations_isoc.R** and/or **run_separations_theseus.R**. Users will need to reset the "current_directory" file path in the **run_separations_xx.R** scripts. 
+After R is installed, all of the Theseus and simulated data files stored in this repository must be unzipped locally prior to running the code. Then, run **plot_simulated.R** to reproduce many simulated data results, or run **plot_realdata.R** to reproduce all of the real data results in the manuscript and more. Users wishing to reproduce the ribbon separations stored in **output_isoc_xx.csv** and/or **output_theseus_xx.csv** may run **run_separations_isoc.R** and/or **run_separations_theseus.R**. Users will need to reset the "current_directory" file path in the **run_separations_xx.R** scripts. 
 
 ## Input Data Details
 
