@@ -129,3 +129,75 @@ Coord_Transform_Points = function(MAP, RIBBON_CENTER, REVERSE = FALSE){
   return(MAP[,c('lon_old', 'lat_old', 'lon_new', 'lat_new')])
 }
 
+
+
+
+
+
+Coord_Transform_Matrix = function(MAP, RIBBON_CENTER, nbreaks, REVERSE = FALSE){
+  K = unique(diff(sort(unique(MAP$lon))))
+  if(is.null(nbreaks)){stop('Specify number of breaks per pixel')}
+  if(REVERSE){
+    TRANSFORM_MAT_REVERSE = davenport_rotation(yaw = RIBBON_CENTER[1]*pi/180, pitch = -(90-RIBBON_CENTER[2])*pi/180)
+    TRANSFORM_MAT = solve(TRANSFORM_MAT_REVERSE)
+  }else{
+    TRANSFORM_MAT_REVERSE = solve(davenport_rotation(yaw = RIBBON_CENTER[1]*pi/180, pitch = -(90-RIBBON_CENTER[2])*pi/180))
+    TRANSFORM_MAT = solve(TRANSFORM_MAT_REVERSE)
+  }
+  
+  ### Define pixel breaks
+  MAP_PARTITION = expand.grid(lon_new= seq(0, 360, K/nbreaks), lat_new = seq(-90, 90, K/nbreaks))
+  MAP_PARTITION$input1_new = as.numeric(MAP_PARTITION$lon_new - 180)*pi/180
+  MAP_PARTITION$input2_new = as.numeric(MAP_PARTITION$lat_new)*pi/180
+  ### Invert to current coordinate system
+  MAP_CART = data.frame(pracma::sph2cart(as.matrix(data.frame(MAP_PARTITION[,c('input1_new', 'input2_new')],1)) ))  
+  names(MAP_CART)=c('x_new', 'y_new', 'z_new')
+  temp = as.matrix(MAP_CART[,c('x_new','y_new','z_new')]) %*% TRANSFORM_MAT_REVERSE
+  MAP_PARTITION$x_old = temp[,1]
+  MAP_PARTITION$y_old = temp[,2]
+  MAP_PARTITION$z_old = temp[,3]
+  ### Transform to lat/lon in current coordinate system
+  MAP_TRANS_SPHERICAL = data.frame(cart2sph(as.matrix(MAP_PARTITION[,c('x_old', 'y_old', 'z_old')])))
+  MAP_PARTITION$lon_old = MAP_TRANS_SPHERICAL$theta*180/pi + 180
+  MAP_PARTITION$lat_old= (MAP_TRANS_SPHERICAL$phi)*180/pi
+  MAP_PARTITION$lon_binned_old = cut(MAP_PARTITION$lon_old, breaks = seq(0, 360, K), labels = sort(unique(MAP$lon)), include.lowest = T)
+  MAP_PARTITION$lat_binned_old = cut(MAP_PARTITION$lat_old, breaks = seq(-90, 90, K), labels = sort(unique(MAP$lat)), include.lowest = T)
+  
+  ### Define new pixel groupings 
+  MAP_PARTITION$lon_binned_new = cut(MAP_PARTITION$lon_new, breaks = seq(0, 360, K), labels = sort(unique(MAP$lon)), include.lowest = T)
+  MAP_PARTITION$lat_binned_new = cut(MAP_PARTITION$lat_new, breaks = seq(-90, 90, K), labels = sort(unique(MAP$lat)), include.lowest = T)
+  
+  
+  MAP_PARTITION = MAP_PARTITION[,c('lon_binned_old', 'lat_binned_old','lon_binned_new', 'lat_binned_new')]
+  MAP_PARTITION$key_old = paste0(MAP_PARTITION$lon_binned_old, '_', MAP_PARTITION$lat_binned_old)
+  MAP_PARTITION$key_new = paste0(MAP_PARTITION$lon_binned_new, '_', MAP_PARTITION$lat_binned_new)
+  MAP_PARTITION$key_all = paste0(MAP_PARTITION$key_old, '_', MAP_PARTITION$key_new)
+  
+  MAP_PARTITION = MAP_PARTITION %>% dplyr::group_by(key_all) %>% 
+    dplyr::mutate(count = length(key_all))
+  MAP_PARTITION = MAP_PARTITION[!duplicated(MAP_PARTITION$key_all),]
+  MAP$key_old = paste0(MAP$lon, '_', MAP$lat)
+  MAP_PARTITION$key_old_num = as.numeric(factor(MAP_PARTITION$key_old, levels = MAP$key_old))
+  MAP_PARTITION$key_new_num = as.numeric(factor(MAP_PARTITION$key_new, levels = MAP$key_old))
+  
+
+  N = length(unlist(MAP[,1]))
+  TEMP = MAP_PARTITION[,c('key_new_num', 'key_old_num', 'count')]
+  names(TEMP) = c('x','y','z')
+  TEST = with(TEMP, Matrix::sparseMatrix(i = as.numeric(x), j=as.numeric(y), x=z, dims = c(N,N)))
+  SUMS = Matrix::rowSums(TEST)
+  sweep_sparse <- function(x, margin, stats, fun = "*") {
+    f <- match.fun(fun)
+    if (margin == 1) {
+      idx <- x@i + 1
+    } else {
+      idx <- x@j + 1
+    }
+    x@x <- f(x@x, stats[idx])
+    return(x)
+  }
+  OUT = sweep_sparse(TEST,1,1/as.vector(unlist(SUMS)), '*')
+  rm(list=c('TEMP','TEST','SUMS','MAP_PARTITION'))
+  return(OUT)
+}
+

@@ -5,7 +5,7 @@
 ###################################
 ### Developed by Dr. Lauren J. Beesley, PhD
 ### Contact: lvandervort@lanl.gov
-### Last Updated: 08/11/2023
+### Last Updated: 07/05/2023
 
 ##################################
 ### Perform Davenport Rotation ###
@@ -31,7 +31,8 @@ Get_Loess_PHI_ANCHOR = function(temp, span = 0.1){
 fitsplines_center_restricted = function(x,y, possible){
   x = x[!is.na(y) & !is.nan(y) & !is.infinite(y)]
   y = y[!is.na(y) & !is.nan(y) & !is.infinite(y)]
-  spline_func = splines::periodicSpline(x,y,period = 360, ord = 4L)
+  #edited next line for bootstrapping
+  spline_func = splines::periodicSpline(x[!duplicated(x)],y[!duplicated(x)],period = 360, ord = 4L)
   xnew= seq(min(x),max(x),0.01)
   xnew = xnew[xnew >= min(possible, na.rm=T) & xnew <= max(possible, na.rm=T)]
   z = predict(spline_func,xnew)$y
@@ -45,7 +46,8 @@ fitsplines_center_restricted = function(x,y, possible){
 evalsplines_center_restricted = function(x,y, xnew){
   x = x[!is.na(y) & !is.nan(y) & !is.infinite(y)]
   y = y[!is.na(y) & !is.nan(y) & !is.infinite(y)]
-  spline_func = splines::periodicSpline(x,y,period = 360, ord = 4L)
+  #edited next line for bootstrapping
+  spline_func = splines::periodicSpline(x[!duplicated(x)],y[!duplicated(x)],period = 360, ord = 4L)
   z = predict(spline_func,xnew)$y
   return(z)
 }
@@ -70,7 +72,7 @@ Get_Distance_Features = function(model_input, RIBBON_CENTER){
   mid_point = mid_point / sqrt(sum(mid_point^2))
   PHI_MAX_CART = rbind(PHI_MAX_CART, mid_point)
   PHI_MAX_CART$iter = 1
-  
+
   ### Calculate best fitting plane between points
   CENTER_ITER = aggregate(cbind(x_rotated,y_rotated,z_rotated)~iter, data = PHI_MAX_CART, FUN = mean)
   PHI_MAX_CART = merge(PHI_MAX_CART, data.frame(iter = CENTER_ITER$iter, x_rotated_mean = CENTER_ITER$x_rotated, y_rotated_mean = CENTER_ITER$y_rotated, z_rotated_mean = CENTER_ITER$z_rotated), by = c('iter'), all.x = T)
@@ -86,7 +88,8 @@ Get_Distance_Features = function(model_input, RIBBON_CENTER){
   ELLIPSE_CENTERS_SPHERICAL = data.frame(rbind(cart2sph(as.matrix(PLANE_CART[1:3]))))
   ELLIPSE_CENTERS_SPHERICAL$lon = ELLIPSE_CENTERS_SPHERICAL[,1]*180/pi + 180
   ELLIPSE_CENTERS_SPHERICAL$ecliptic_lat= (ELLIPSE_CENTERS_SPHERICAL[,2])*180/pi
-
+ 
+  
   ### Rotate into new coordinate system, where midpoint doesn't move
   TEST = data.frame(model_input[,c('lon_ecliptic', 'lat_ecliptic')])
   names(TEST) = c('lon','lat')
@@ -99,15 +102,14 @@ Get_Distance_Features = function(model_input, RIBBON_CENTER){
 
 
 
-
-
-
-
-
-GAM_Separation = function(RIBBON_CENTER = NULL, 
+GAM_Separation = function(BOOTINDS = NULL, RIBBON_CENTER = NULL, 
                           THRESH = 0.75,  BUFFER = 2, RIBBON_BOUNDS = 30, KNOTS = 10, 
                           PEAK_ALL = NULL, AZI_KNOTS = 24, GAMK = 50, THESEUS_DELINE = F,
                           PTERMS = 10){
+
+  if(is.null(BOOTINDS)){
+    BOOTINDS = c(1:length(unlist(model_input[,1])))
+  }
   #######################################
   ### Calculate Cartesian Coordinates ###
   #######################################
@@ -121,6 +123,7 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   ###########################
   ### Get Initial Phi_Max ###
   ###########################
+  #added limits on polar_discrete to add stability, see ISOC 2017 tabular_antiram_cg for example why
   if('phi_max_esa4' %in% names(model_input)){model_input = subset(model_input, select = -c(phi_max_esa4))}
   model_input = merge(model_input, data.frame(azimuthal_discrete = AZIMUTHAL, phi_max_esa4 = PEAK_ALL$lat_new + 90), by = 'azimuthal_discrete', all.x = T, all.y = T)
   model_input = model_input[order(model_input$azimuthal_discrete, model_input$polar_discrete),]
@@ -129,7 +132,9 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   }else{
     model_input$eligible_angles = as.numeric(model_input$polar_discrete <= (model_input$phi_max_esa4+10) & model_input$polar_discrete >=  (model_input$phi_max_esa4-10) & model_input$polar_discrete >= 90 )
   }
-  SUBSET = model_input
+  
+  #BOOTSTRAP SAMPLE
+  SUBSET = model_input[BOOTINDS,]
   SUBSET = SUBSET %>% dplyr::group_by(azimuthal_discrete) %>% 
     dplyr::mutate(phi_max = fitsplines_center_restricted(polar_discrete, ena_rate, polar_discrete[eligible_angles==1])[1])
   SUBSET = SUBSET[!duplicated(SUBSET$azimuthal_discrete),]
@@ -147,9 +152,10 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   model_input$dist_from_peak =model_input$polar_discrete- model_input$phi_max
   model_input$phi_max_orig = model_input$phi_max
   
-  ######################################
-  ### Define the Primary Ribbon Mask ###
-  ######################################
+  ##############################
+  ##############################
+  ### Define the Ribbon Mask ###
+  ##############################
   model_input = model_input[order(model_input$azimuthal_discrete, model_input$polar_discrete),]
   
   ### Edge detection and inclusion/exclusions
@@ -161,11 +167,15 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   model_input$dist_from_peak_int = as.numeric(as.character(cut(model_input$dist_from_peak, breaks=  BREAKS, right = FALSE, labels = BREAKS[-length(BREAKS)]+1)))
   BREAKS_LABELS = sort(unique(model_input$dist_from_peak_int ))
   model_input = model_input[order(model_input$azimuthal_discrete, model_input$dist_from_peak_int),]
-  model_input = model_input %>% dplyr::group_by(polar_discrete) %>% dplyr::mutate(ena_smoothed = predict(loess(ena_rate~azimuthal_discrete, span = 0.5), newdata = data.frame(azimuthal_discrete = AZIMUTHAL)))
   model_input$dist_from_peak_int = as.numeric(as.character(model_input$dist_from_peak_int))
-  model_input = model_input[order(model_input$azimuthal_discrete, model_input$dist_from_peak_int),]
   
-  DATA_DRAW=reshape(data = data.frame(model_input[,c('azimuthal_discrete', 'dist_from_peak_int', 'ena_smoothed')]), idvar = 'dist_from_peak_int', timevar = 'azimuthal_discrete', v.names = c('ena_smoothed'), direction = 'wide')
+  ### modify for bootstrapping
+  TEMP = model_input[BOOTINDS,]
+  TEMP = TEMP %>% dplyr::group_by(polar_discrete) %>% dplyr::mutate(ena_smoothed = predict(loess(ena_rate~azimuthal_discrete, span = 0.5), newdata = data.frame(azimuthal_discrete = azimuthal_discrete)))
+  TEMP$dist_from_peak_int = as.numeric(as.character(TEMP$dist_from_peak_int))
+  TEMP = TEMP[order(TEMP$azimuthal_discrete, TEMP$dist_from_peak_int),]
+  
+  DATA_DRAW=reshape(data = data.frame(TEMP[,c('azimuthal_discrete', 'dist_from_peak_int', 'ena_smoothed')]), idvar = 'dist_from_peak_int', timevar = 'azimuthal_discrete', v.names = c('ena_smoothed'), direction = 'wide')
   DATA_DRAW = DATA_DRAW[order(DATA_DRAW[,1]),]
   DATA_DRAW = as.matrix(DATA_DRAW[,-1])
   DATA_DRAW[is.na(DATA_DRAW)] = 0
@@ -180,9 +190,11 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   im_laplace_save = im_laplace_sub
   im_laplace_sub[im_laplace_sub<quantile(im_laplace_sub[im_laplace_sub>0], THRESH)]=0
   im_laplace_save2 = im_laplace_sub
+  ### Error checking 
   if(sum(im_laplace_sub)==0){
     im_laplace_sub[,abs(BREAKS_LABELS)<=RIBBON_BOUNDS]=1
   }
+  
   
   ### Define conservative mask band
   UPPERS = apply(t(im_laplace_sub),2,FUN = function(x,BREAKS_LABELS){max(BREAKS_LABELS[x>0],na.rm=T)},BREAKS_LABELS)
@@ -196,6 +208,7 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   model_input$mask = as.numeric(model_input$dist_from_peak_int <= model_input$upper_cut &
                                   model_input$dist_from_peak_int >= model_input$lower_cut)
   model_input = model_input[order(model_input$azimuthal_discrete, model_input$polar_discrete),]
+
   
   
   ###############################
@@ -216,10 +229,10 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   #Divide by 100 due to cnorm bug that dies when y is too large
   
   ### Model 1: Symmetry
-  TEMP = rbind(data.frame(model_input,ind = 1),data.frame(model_input,ind = 0))
+  TEMP = rbind(data.frame(model_input[BOOTINDS,],ind = 1),data.frame(model_input[BOOTINDS,],ind = 0))
   TEMP$abs_lat_nosetail[TEMP$ind==0] = -TEMP$abs_lat_nosetail[TEMP$ind==0]
   TEMP$yi = as.matrix(cbind(TEMP$lower,TEMP$upper))
-  TEMP = TEMP[!is.na(TEMP$ena_rate),]
+  TEMP = TEMP[!is.na(TEMP$upper),] #changed from !is.na(TEMP$ena_rate) on 3/4/24
   gam_mod2 <- mgcv::bam(yi ~ s(abs_lat_nosetail, lon_nosetail, bs=mybasis, m= 4, k = GAMK),
                         data=TEMP,
                         family = mgcv::cnorm, discrete= T) #fit using mask, too
@@ -238,22 +251,25 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   ### Combine: weighting as function of abs(lon_nosetail - 180)
   model_input$dist = as.numeric(abs(model_input$lon_nosetail-180))
   model_input$dist = model_input$dist / max(model_input$dist)
-  
   model_input$gdf_init = as.numeric(model_input$init2)*(1-model_input$dist)+
     as.numeric(model_input$init3)*(model_input$dist)
-
-
+ 
+  
   ################################
   ### Re-estimate Ribbon Peaks ###
   ################################
   
   model_input$ribbon_init = model_input$ena_rate - model_input$gdf_init
+  
+  ### Updated Estimates 
   model_input = model_input[order(model_input$azimuthal_discrete, model_input$polar_discrete),]
-  SUBSET = model_input
+  
+  ##Edit for bootstrap
+  SUBSET = model_input[BOOTINDS,]
   if(K==6){
-    SUBSET$eligible_angles = as.numeric(model_input$polar_discrete <= (model_input$phi_max_esa4+24) & model_input$polar_discrete >=  (model_input$phi_max_esa4-24) & model_input$polar_discrete >= 90  )
+    SUBSET$eligible_angles = as.numeric(SUBSET$polar_discrete <= (SUBSET$phi_max_esa4+24) & SUBSET$polar_discrete >=  (SUBSET$phi_max_esa4-24) & SUBSET$polar_discrete >= 90  )
   }else{
-    SUBSET$eligible_angles = as.numeric(model_input$polar_discrete <= (model_input$phi_max_esa4+10) & model_input$polar_discrete >=  (model_input$phi_max_esa4-10) & model_input$polar_discrete >= 90 )
+    SUBSET$eligible_angles = as.numeric(SUBSET$polar_discrete <= (SUBSET$phi_max_esa4+10) & SUBSET$polar_discrete >=  (SUBSET$phi_max_esa4-10) & SUBSET$polar_discrete >= 90 )
   }
   SUBSET = SUBSET %>% dplyr::group_by(azimuthal_discrete) %>% 
     dplyr::mutate(phi_max = fitsplines_center_restricted(polar_discrete, ribbon_init, polar_discrete[eligible_angles==1])[1])
@@ -282,12 +298,13 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
                                              phi_max=  PHI_ANCHOR), by = 'azimuthal_discrete',
                       all.x = T, all.y = F)
   model_input = model_input[order(model_input$azimuthal_discrete, model_input$polar_discrete),]
+  
+  ### Type: Primary analysis of ribbon, Scale out intensities
   model_input$dist_from_peak = model_input$polar_discrete - model_input$phi_max
-  
-  
-  ##############################################
-  ### Re-masking, Only if THESEUS_DELINE = T ###
-  ##############################################
+
+  ##################################################
+  ### Re-masking, Only of THESEUS_DELINE/PPR = T ###
+  ##################################################
   if(THESEUS_DELINE){
     model_input$ribbon_init = model_input$ena_rate - model_input$gdf_init
     model_input =  model_input %>% dplyr::group_by(azimuthal_discrete) %>%
@@ -312,35 +329,40 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
       }
     }
     library(optimx)
-    GAUSS = apply(cbind(AZIMUTHAL),1,fit_Gaussian,model_input) 
+    #modified to bootstrap
+    GAUSS = apply(cbind(AZIMUTHAL),1,fit_Gaussian,model_input = model_input[BOOTINDS,]) #CHANGED 7/22/23
     SD_CUTOFF_UPPER = sqrt(median(exp(GAUSS[2,]),na.rm=T))
     SD_CUTOFF_LOWER = sqrt(median(exp(GAUSS[3,]),na.rm=T))
     
-    model_input$mask_temp = as.numeric(model_input$dist_from_peak_int <= (2*SD_CUTOFF_UPPER + BUFFER*unique(diff(AZIMUTHAL))) & 
-                                         model_input$dist_from_peak_int >= (-2*SD_CUTOFF_LOWER -BUFFER*unique(diff(AZIMUTHAL))) ) 
+    model_input$mask_temp = as.numeric(model_input$dist_from_peak_int <= (2*SD_CUTOFF_UPPER + BUFFER*unique(diff(AZIMUTHAL))) & #Changed 7/21/23
+                                         model_input$dist_from_peak_int >= (-2*SD_CUTOFF_LOWER -BUFFER*unique(diff(AZIMUTHAL))) ) #Changed 7/21/23
+    
+
     model_input$mask_temp[model_input$mask_temp == 1 & model_input$mask == 0]=0
     model_input = model_input[order(model_input$azimuthal_discrete, model_input$polar_discrete),]
   }else{
     model_input$mask_temp = model_input$mask
   }
-  
-  
+
+
   ##################################
   ### Implement Delining via PPR ### 
   ##################################
-  if(THESEUS_DELINE){
+
+  if(THESEUS_DELINE | BIAS == 'Ribbon Underest'){
     model_input$ribbon_init = model_input$ena_rate - model_input$gdf_init
-    if(PTERMS > 0){
-      ppr_resid_mod <- ppr(ribbon_init ~ x+y+z,
+    if(PTERMS>0){
+    DAT = model_input[BOOTINDS,] #bootstrap
+    ppr_resid_mod <- ppr(ribbon_init ~ x+y+z,
                          nterms = PTERMS,sm.method = 'gcvspline',
                          #weights = ppr_wt,
-                         data = model_input[model_input$mask_temp == 0,])
-      model_input$ppr_gdf_bias <- predict(ppr_resid_mod, newdata=model_input, type="response")
+                         data = DAT[DAT$mask_temp == 0,])#, gcvpen = 2*max(model_input$ribbon_init, na.rm=T)) #EDITED 8/21/23
+    model_input$ppr_gdf_bias <- predict(ppr_resid_mod, newdata=model_input, type="response")
     }else{
-      model_input$ppr_gdf_bias = 0 
+       model_input$ppr_gdf_bias <- 0
     }
     ### don't allow prediction to be larger than ribbon residual
-    model_input$ppr_gdf_bias[model_input$ppr_gdf_bias>model_input$ribbon_init & !is.na(model_input$ribbon_init)] = model_input$ribbon_init[model_input$ppr_gdf_bias>model_input$ribbon_init & !is.na(model_input$ribbon_init)] 
+    model_input$ppr_gdf_bias[model_input$ppr_gdf_bias>model_input$ribbon_init & !is.na(model_input$ribbon_init)] = model_input$ribbon_init[model_input$ppr_gdf_bias>model_input$ribbon_init & !is.na(model_input$ribbon_init)] #ADDED 8/7/23
     
     model_input$ribbon_init_temp = model_input$ribbon_init-model_input$ppr_gdf_bias
     model_input$ribbon_init_temp[model_input$ribbon_init_temp<0] = 0
@@ -354,20 +376,22 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
       model_input$ribbon_init = model_input$ribbon_init_temp
     }
   }
-  model_input$ribbon_init[model_input$mask == 0]=0 
-  model_input$ribbon_init[model_input$ribbon_init<0 & !is.na(model_input$ribbon_init)]=0 
+  model_input$ribbon_init[model_input$mask == 0]=0 #Added 7/21/23
+  model_input$ribbon_init[model_input$ribbon_init<0 & !is.na(model_input$ribbon_init)]=0 #Added 7/21/23
   model_input$ribbon_init[model_input$ribbon_init>model_input$ena_rate & !is.na(model_input$ena_rate)]=model_input$ena_rate[model_input$ribbon_init>model_input$ena_rate & !is.na(model_input$ena_rate)]=0
-  
-  
+
   #################################################
   ### Reestimating Ribbon Peaks and Intensities ###
   #################################################
   model_input = model_input[order(model_input$azimuthal_discrete, model_input$polar_discrete),]
-  SUBSET = model_input
+  
+  
+  ### Updated Estimates 
+  SUBSET = model_input[BOOTINDS,] #bootstrap
   if(K==6){
-    SUBSET$eligible_angles = as.numeric(model_input$polar_discrete <= (model_input$phi_max_esa4+24) & model_input$polar_discrete >=  (model_input$phi_max_esa4-24) & model_input$polar_discrete >= 90  )
+    SUBSET$eligible_angles = as.numeric(SUBSET$polar_discrete <= (SUBSET$phi_max_esa4+24) & SUBSET$polar_discrete >=  (SUBSET$phi_max_esa4-24) & SUBSET$polar_discrete >= 90  )
   }else{
-    SUBSET$eligible_angles = as.numeric(model_input$polar_discrete <= (model_input$phi_max_esa4+10) & model_input$polar_discrete >=  (model_input$phi_max_esa4-10) & model_input$polar_discrete >= 90 )
+    SUBSET$eligible_angles = as.numeric(SUBSET$polar_discrete <= (SUBSET$phi_max_esa4+10) & SUBSET$polar_discrete >=  (SUBSET$phi_max_esa4-10) & SUBSET$polar_discrete >= 90 )
   }
   SUBSET = SUBSET %>% dplyr::group_by(azimuthal_discrete) %>% 
     dplyr::mutate(phi_max = fitsplines_center_restricted(polar_discrete, ribbon_init, polar_discrete[eligible_angles==1])[1],
@@ -406,6 +430,7 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   SUBSET_MAX = SUBSET_MAX[!is.na(SUBSET_MAX$ena_rate) & !is.nan(SUBSET_MAX$ena_rate),]
   SUBSET_MAX = SUBSET_MAX[!duplicated(SUBSET_MAX$azimuthal_discrete),]
   
+  
   ### Merge
   if('phi_max' %in% names(model_input)){model_input = subset(model_input, select = -c(phi_max))}
   model_input = merge(model_input,data.frame(azimuthal_discrete = AZIMUTHAL, 
@@ -417,17 +442,20 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
                       all.x = T, all.y = F)
   model_input = model_input[order(model_input$azimuthal_discrete, model_input$polar_discrete),]
   
+  ### Type: Primary analysis of ribbon, Scale out intensities
   model_input$dist_from_peak = model_input$polar_discrete - model_input$phi_max
   model_input$above_peak = as.numeric(model_input$dist_from_peak>0)
   model_input$flux_max[model_input$flux_max<0.001 & !is.na(model_input$flux_max)]=0
   model_input$ribbon_init_scaled = model_input$ribbon_init/model_input$flux_max
   model_input$ribbon_init_scaled[is.na(model_input$ribbon_init_scaled)|is.infinite(model_input$ribbon_init_scaled)]=0
   model_input$ribbon_init_scaled[model_input$ribbon_init_scaled<0]=0
+
   
   ########################
   ### Fit Ribbon Model ###
   ########################
   
+  ### Type: primary ribbon analysis
   model_input$dist1 = abs(model_input$dist_from_peak*as.numeric(model_input$above_peak==1)) # iSpline monotone increasing
   model_input$dist2 = abs(-model_input$dist_from_peak*as.numeric(model_input$above_peak==0))
   model_input$UPPER_THRESH = max(model_input$dist1,na.rm=T)
@@ -435,27 +463,27 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   model_input$KNOTS = KNOTS
   model_input$AZI_KNOTS = AZI_KNOTS
   model_input$ribbon_init_scaled_inv = 1-model_input$ribbon_init_scaled
+  ### The following line is needed for ISOC. Helps a lot with stability
   if(K==6){
-    ### The following line is needed for ISOC. Helps a lot with stability
     model_input$ribbon_init_scaled_inv[model_input$ribbon_init_scaled_inv < (-0.25) & (model_input$dist1 > 4 | model_input$dist2 > 4)] = NA
   }
   fit = mgcv::gam(ribbon_init_scaled_inv~splines2::iSpline(dist1, knots = seq(0.01,unique(UPPER_THRESH)-1, length.out = unique(KNOTS)),
                                                            Boundary.knots = c(0,unique(UPPER_THRESH)), intercept = FALSE)*pbs(x=azimuthal_discrete, df = unique(AZI_KNOTS), periodic = TRUE, Boundary.knots = c(0,360),intercept = TRUE)+
                     splines2::iSpline(dist2, knots = seq(0.01,unique(LOWER_THRESH)-1, length.out = unique(KNOTS)),
                                       Boundary.knots = c(0,unique(LOWER_THRESH)), intercept = FALSE)*pbs(x=azimuthal_discrete, df = unique(AZI_KNOTS), periodic = TRUE, Boundary.knots = c(0,360),intercept = TRUE),
-                  data = model_input, select = T)
+                  data = model_input[BOOTINDS,], select = T) #bootstrap
   model_input$ribbon_profile = predict(fit,newdata = model_input[,c('azimuthal_discrete','dist1','dist2', 'UPPER_THRESH','LOWER_THRESH','KNOTS', 'AZI_KNOTS')],  se.fit = F, type = 'response' )
   model_input$ribbon_profile = 1-model_input$ribbon_profile
   model_input$ribbon_profile[model_input$ribbon_profile<0]=0
+  ### The following line is needed for ISOC. Helps a lot with stability
   if(K==6){
-    ### The following line is needed for ISOC. Helps a lot with stability
-    model_input$ribbon_profile[ model_input$ribbon_profile>1.25] = 1 
+    model_input$ribbon_profile[ model_input$ribbon_profile>1.25] = 1
   }
   model_input$ribbon_profile[abs(model_input$dist_from_peak)<1 & model_input$ribbon_profile<model_input$max_val]=model_input$max_val[abs(model_input$dist_from_peak)<1 & model_input$ribbon_profile<model_input$max_val]
   model_input$ribbon_profile[model_input$mask==0]=0
   model_input$ribbon_fitted = model_input$ribbon_profile*model_input$flux_max
-  model_input$ribbon_fitted[model_input$mask == 0]=0 #
-  model_input$ribbon_fitted[model_input$ribbon_fitted<0 & !is.na(model_input$ribbon_fitted)]=0 
+  model_input$ribbon_fitted[model_input$mask == 0]=0 #Added 7/21/23
+  model_input$ribbon_fitted[model_input$ribbon_fitted<0 & !is.na(model_input$ribbon_fitted)]=0 #Added 7/21/23
   
   
   #######################
@@ -494,15 +522,16 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   ### Re-estimate GDF with GAM
   mybasis <- "sos"
   gam_mod2 <- mgcv::gam(gdf_est2 ~ s(lat, lon,bs=mybasis) ,
-                        data=model_input, family = gaussian())
+                        data=model_input[BOOTINDS,], family = gaussian()) #boot
   model_input$gdf_init2 <- predict(gam_mod2, newdata = model_input, type="response")
   gc()
   
   ### Refine GDF with PPR
   model_input$resid_gdf = model_input$gdf_est2 - model_input$gdf_init2
+  DAT = model_input[BOOTINDS,] #boot
   ppr_resid_mod <- ppr(resid_gdf ~ x+y+z,
                        nterms = 100, sm.method = 'gcvspline',
-                       data = model_input[model_input$edge_inner == 0,])
+                       data = DAT[DAT$edge_inner == 0,])
   model_input$ppr_gdf_bias <- predict(ppr_resid_mod, newdata=model_input, type="response")
   
   model_input$gdf_est3 = model_input$gdf_init2+model_input$ppr_gdf_bias
@@ -517,7 +546,7 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
   ### Final Edge and Monotonicity Fixes ###
   #########################################
   if(K == 2){
-    
+    #not on bootstrap sample---on model_input itself
     Get_InterpEdge_GDF = function(lat, val, edge_exclude){
       temp = data.frame(lat = lat, val = val, edge_exclude = edge_exclude)
       spline_func = stats::splinefun(temp$val[edge_exclude == 0]~temp$lat[edge_exclude == 0], method = 'natural')
@@ -535,17 +564,20 @@ GAM_Separation = function(RIBBON_CENTER = NULL,
     model_input$gdf_final = model_input$gdf_final_smoothed
     model_input$ribbon_final = model_input$ena_rate - model_input$gdf_final
   }
+
   
   #############################
   ### Write Results to File ###
   #############################
   RESULTS = model_input[,c('polar_discrete', 'azimuthal_discrete','lon', 'lat', 
                            'ena_rate', 'sd_ena_rate',
-                           'gdf_final', 
+                           'gdf_final', 'ribbon_init',
                            'ribbon_profile', 'ribbon_fitted','ribbon_final', 
                            'mask', 'mask_temp')]
   RESULTS = RESULTS[order(RESULTS$azimuthal_discrete, RESULTS$polar_discrete),]
   gc()
   return(list(RESULTS = RESULTS))
 }
+
+
 

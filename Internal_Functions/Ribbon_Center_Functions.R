@@ -83,6 +83,8 @@ GET_CENTER_CIRCULAR = function(MAT){
 }
 
 
+
+
 GET_CENTER_CIRCULAR_LACKOFFIT = function(MAT){
   normal_vector = MAT[,c('x_plane', 'y_plane', 'z_plane')][1,]
   ### Perform rodrigues rotation
@@ -99,16 +101,40 @@ GET_CENTER_CIRCULAR_LACKOFFIT = function(MAT){
   w<- seq(0, 2*pi, len=360)
   xx <- fit[3] * cos(w) + fit[1]
   yy <- fit[3] * sin(w) + fit[2]
-  preds_estimated = data.frame(x = xx, y = yy)
-  get_dist = function(z,preds_estimated){
-    calc_dist = sqrt(((preds_estimated$x - z[1])^2) + ((preds_estimated$y - z[2])^2))
-    return(min(calc_dist,na.rm=T))
-  }
-  DISTS = apply(P_rot[,1:2], 1, FUN = get_dist, preds_estimated)
-  Sig = rbind(c(var(DISTS, na.rm=T),0),c(0,var(DISTS, na.rm=T)))
-  center_estimated = MASS::mvrnorm(n=1, mu = center_estimated, Sigma = Sig)
   
-  zvals_test = seq(0,1,0.001)
+  preds_estimated = data.frame(x = xx, y = yy)
+  
+  P_rot_polar = data.frame(cart2pol(as.matrix(P_rot[,1:2]) ))
+  names(P_rot_polar) = c('phi','r')
+  P_rot_polar$polar_discrete = P_rot_polar$r
+  P_rot_polar$azimuthal_discrete = P_rot_polar$phi*180/pi + 180
+  
+  pred_polar = data.frame(cart2pol(as.matrix(preds_estimated[,1:2]) ))
+  names(pred_polar) = c('phi','r')
+  pred_polar$polar_discrete = pred_polar$r
+  pred_polar$azimuthal_discrete = pred_polar$phi*180/pi + 180
+  
+  ### Match up fitted values
+  P_rot_polar = P_rot_polar %>% dplyr::group_by(azimuthal_discrete) %>%
+    dplyr::mutate(fitted_preds = pred_polar$polar_discrete[which.min(abs(pred_polar$azimuthal_discrete -azimuthal_discrete))])
+  P_rot_polar$error = P_rot_polar$polar_discrete - P_rot_polar$fitted_preds
+  
+  ### Draw polar coordinates of new center
+  center_polar = data.frame(t(cart2pol(rbind(center_estimated[1:2]) )))
+  names(center_polar) = c('phi','r')
+  center_polar$polar_discrete = center_polar$r
+  center_polar$azimuthal_discrete = center_polar$phi*180/pi + 180
+  
+  var_est =  var(P_rot_polar$error, na.rm=T) #actually what Funsten proposed
+  center_drawn  = MASS::mvrnorm(n = 1, mu = c(center_polar$polar_discrete, center_polar$azimuthal_discrete), 
+                                Sigma = rbind(c(var_est,0), c(0,var_est)))
+  center_drawn = data.frame(polar_discrete=center_drawn[1], azimuthal_discrete = center_drawn[2])
+  center_drawn$r = center_drawn$polar_discrete
+  center_drawn$phi = (center_polar$azimuthal_discrete-180)*pi/180
+  
+  TO_ROTATE = rbind(center_drawn[,c('phi', 'r')])
+  center_estimated =
+    zvals_test = seq(0,1,0.001)
   center_3D = as.matrix(data.frame(a=as.vector(unlist(center_estimated)[1]),
                                    b=as.vector(unlist(center_estimated)[2]),
                                    zvals_test)) %*% solve(t(R))
@@ -118,7 +144,6 @@ GET_CENTER_CIRCULAR_LACKOFFIT = function(MAT){
   spherical = cart2sph(center_3D)
   return(center_3D[which.min(abs(spherical[,3]-1)),])
 }
-
 
 
 
@@ -143,14 +168,38 @@ GET_CENTER_LACKOFFIT = function(MAT, N = 1){
   ### Get predictions
   preds = fitConic::createConic(x= P_rot[,1], param = fit$parA, conicType = 'e')
   preds_estimated = data.frame(x = preds[,1], y = preds[,2])
-  get_dist = function(z,preds_estimated){
-    calc_dist = sqrt(((preds_estimated$x - z[1])^2) + ((preds_estimated$y - z[2])^2))
-    return(min(calc_dist,na.rm=T))
-  }
-  DISTS = apply(P_rot[,1:2], 1, FUN = get_dist, preds_estimated)
-  Sig = rbind(c(var(DISTS, na.rm=T),0),c(0,var(DISTS, na.rm=T)))
-  center_estimated = MASS::mvrnorm(n=1, mu = center_estimated, Sigma = Sig)
-
+  
+  P_rot_polar = data.frame(cart2pol(as.matrix(P_rot[,1:2]) ))
+  names(P_rot_polar) = c('phi','r')
+  P_rot_polar$polar_discrete = P_rot_polar$r
+  P_rot_polar$azimuthal_discrete = P_rot_polar$phi*180/pi + 180
+  
+  pred_polar = data.frame(cart2pol(as.matrix(preds_estimated[,1:2]) ))
+  names(pred_polar) = c('phi','r')
+  pred_polar$polar_discrete = pred_polar$r
+  pred_polar$azimuthal_discrete = pred_polar$phi*180/pi + 180
+  
+  ### Match up fitted values
+  P_rot_polar = P_rot_polar %>% dplyr::group_by(azimuthal_discrete) %>%
+    dplyr::mutate(fitted_preds = pred_polar$polar_discrete[which.min(abs(pred_polar$azimuthal_discrete -azimuthal_discrete))])
+  P_rot_polar$error = P_rot_polar$polar_discrete - P_rot_polar$fitted_preds
+  
+  ### Draw polar coordinates of new center
+  center_polar = data.frame(t(cart2pol(rbind(center_estimated[1:2]) )))
+  names(center_polar) = c('phi','r')
+  center_polar$polar_discrete = center_polar$r
+  center_polar$azimuthal_discrete = center_polar$phi*180/pi + 180
+  
+  var_est =  var(P_rot_polar$error, na.rm=T) #actually what Funsten proposed
+  center_drawn  = MASS::mvrnorm(n = 1, mu = c(center_polar$polar_discrete, center_polar$azimuthal_discrete), 
+                                Sigma = rbind(c(var_est,0), c(0,var_est)))
+  center_drawn = data.frame(polar_discrete=center_drawn[1], azimuthal_discrete = center_drawn[2])
+  center_drawn$r = center_drawn$polar_discrete
+  center_drawn$phi = (center_polar$azimuthal_discrete-180)*pi/180
+  
+  TO_ROTATE = rbind(center_drawn[,c('phi', 'r')])
+  center_estimated = as.vector(apply(TO_ROTATE, 1, FUN = function(x){pracma::pol2cart(as.vector(c(as.numeric(x[1]),as.numeric(x[2]),z=1)))}))[1:2]
+  
   if(is.matrix(center_estimated)){
     center_3D_save = matrix(NA, ncol = 3, nrow = nrow(center_estimated))
   }else{
@@ -262,11 +311,15 @@ loesssmooth_center = function(temp, SPAN = 0.3){
   preds = predict(fit, newdata = data.frame(azimuthal_discrete = AZIMUTHAL))
   return(preds)
 }
-Estimate_Ribbon_Center = function(model_input, WORKING_CENTER, ndraws = 1000, JACKDRAW = FALSE, EXCLUDE = TRUE, SUMMARY_TYPE = 'Peak', ELLIPSE = TRUE){
+Estimate_Ribbon_Center = function(model_input, WORKING_CENTER, DRAW = FALSE, EXCLUDE = TRUE, SUMMARY_TYPE = 'Peak', ELLIPSE = TRUE){
   
-  if(SUMMARY_TYPE == 'Peak'){
+  if(SUMMARY_TYPE == 'Peak' | SUMMARY_TYPE == 'Peak Draw'){
     my_peak_fun = fitsplines_center
-  }else if(SUMMARY_TYPE == 'FWQM'){
+  }else if(SUMMARY_TYPE == 'Mean'){
+    my_peak_fun = fitsplines_mean_center
+  }else if(SUMMARY_TYPE == 'Median'){
+    my_peak_fun = fitsplines_median_center
+  }else if(SUMMARY_TYPE == 'FWQM' | SUMMARY_TYPE == 'FWQM Draw'){
     my_peak_fun = fitsplines_fwqm_center
   }
   
@@ -289,55 +342,16 @@ Estimate_Ribbon_Center = function(model_input, WORKING_CENTER, ndraws = 1000, JA
   PEAKS_GLOBAL = as.vector(loesssmooth_center(data.frame(azimuthal_discrete=SUBSET_GLOBAL$azimuthal_discrete,
                                                          fits = SUBSET_GLOBAL$fits_anchor), SPAN = 0.1))
   SUBSET = SUBSET[order(SUBSET$azimuthal_discrete, SUBSET$polar_discrete),]
-
-  ### Approximate the covariance
-  DATA_DRAW=reshape(data = data.frame(SUBSET[,c('azimuthal_discrete', 'polar_discrete', 'ena_rate')]), idvar = 'polar_discrete', timevar = 'azimuthal_discrete', v.names = c('ena_rate'), direction = 'wide')
-  DATA_DRAW = DATA_DRAW[order(DATA_DRAW[,1]),]
-  DATA_DRAW = DATA_DRAW[,-1]
-  CORMAT_lat = cor(t(DATA_DRAW), method = 'spearman', use = 'pairwise.complete.obs')
-  CORMAT_lat[is.na(CORMAT_lat)]=0
-  CORMAT_lat = as.matrix(Matrix::nearPD(CORMAT_lat, corr = T)$mat, maxit = 1000)
-  CORMAT_lon = cor(DATA_DRAW, method = 'spearman', use = 'pairwise.complete.obs')
-  CORMAT_lon[is.na(CORMAT_lon)]=0
-  CORMAT_lon = as.matrix(Matrix::nearPD(CORMAT_lon, corr = T)$mat, maxit = 1000)
-  Q = Matrix::kronecker(CORMAT_lon, CORMAT_lat)
-  SUBSET$sd_ena_rate[is.na(SUBSET$sd_ena_rate)]= min(SUBSET$sd_ena_rate[!is.na(SUBSET$sd_ena_rate)])
-  SIGMA = as.matrix(as.vector(unlist(SUBSET$sd_ena_rate))) %*% t(as.matrix(as.vector(unlist(SUBSET$sd_ena_rate))))
-  COVAR = Q*SIGMA
-  rm('SIGMA')
-  COVAR_CHOL = chol(COVAR)
- 
   
   
   ######################
-  ### Estimate Peaks ###
+  ### Organize Peaks ###
   ######################
-  PEAKS = matrix(NA, nrow = length(AZIMUTHAL), ncol = ndraws)
-  for(iter in 1:ndraws){
-    #Draw map using provided standard errors
-    SUBSET$ENA_RATES = as.vector(mvnfast::rmvn(1, mu = as.vector(unlist(SUBSET$ena_rate)), sigma = COVAR_CHOL, ncores = 1, isChol = TRUE, A = NULL, kpnames = FALSE))
-    #Estimate initial peaks using cubic interpolation
-    SUBSET = SUBSET %>% dplyr::group_by(azimuthal_discrete) %>% dplyr::mutate(fits = my_peak_fun(polar_discrete,ENA_RATES))
-    
-
-    SUBSET2 = SUBSET[!duplicated(SUBSET$azimuthal_discrete),]
-    SUBSET2 = SUBSET2[order(as.numeric(as.character(SUBSET2$azimuthal_discrete))),]
-    SUBSET2$fits = as.numeric(forecast::tsclean(stats::ts(SUBSET2$fits)))
-    PEAKS[,iter] = as.vector(loesssmooth_center(data.frame(SUBSET2[,c('fits', 'azimuthal_discrete')]), SPAN = 0.1))
-  }
   
-  rm(list = c('COVAR_CHOL', 'COVAR'))
-
-  gc()
-  
-  PHI_MAX_LONG = data.frame(azimuthal_discrete = rep(AZIMUTHAL, ndraws), 
-                            iter = rep(c(1:ndraws), each = length(AZIMUTHAL)), 
-                            polar_discrete = as.vector(PEAKS), 
-                            id = rep(c(1:length(AZIMUTHAL)), each = ndraws))
-  PHI_MAX_LONG = rbind(PHI_MAX_LONG, data.frame(azimuthal_discrete = AZIMUTHAL, 
-                                                iter = 0, 
-                                                polar_discrete = as.vector(PEAKS_GLOBAL), 
-                                                id = c(1:length(AZIMUTHAL))))
+  PHI_MAX_LONG = data.frame(azimuthal_discrete = AZIMUTHAL, 
+                            iter = 0, 
+                            polar_discrete = as.vector(PEAKS_GLOBAL), 
+                            id = c(1:length(AZIMUTHAL)))
   
   #################################
   ### Convert to Ecliptic Frame ###
@@ -348,7 +362,7 @@ Estimate_Ribbon_Center = function(model_input, WORKING_CENTER, ndraws = 1000, JA
   PHI_MAX_CART = data.frame(t(apply(PHI_MAX_LONG[,c('azimuthal_discrete', 'polar_discrete')], 1, FUN = function(x){pracma::sph2cart(as.vector(c(as.numeric(x[1]-180)*pi/180,as.numeric(x[2]-90)*pi/180, 1)))})))
   names(PHI_MAX_CART)=c('x', 'y', 'z')
   PHI_MAX_CART$iter = PHI_MAX_LONG$iter
-
+  
   ### Convert to ecliptic frame
   TRANSFORM_MAT_REVERSE = solve(davenport_rotation(yaw = WORKING_CENTER[1]*pi/180, pitch = -(90-WORKING_CENTER[2])*pi/180))
   temp = as.matrix(PHI_MAX_CART[,c('x','y','z')]) %*% TRANSFORM_MAT_REVERSE
@@ -366,53 +380,25 @@ Estimate_Ribbon_Center = function(model_input, WORKING_CENTER, ndraws = 1000, JA
   PHI_MAX_CART = merge(PHI_MAX_CART, data.frame(iter = CENTER_ITER$iter, x_rotated_mean = CENTER_ITER$x_rotated, y_rotated_mean = CENTER_ITER$y_rotated, z_rotated_mean = CENTER_ITER$z_rotated), by = c('iter'), all.x = T)
   
   ### Estimate plane normal vector (limit to positive-z normal)
-  PLANE_CART = matrix(NA, ncol = 3, nrow = ndraws)
-  for(i in c(1:ndraws)){
-    PLANE_CART[i,] =as.vector(unlist(GET_PLANE(MAT = PHI_MAX_CART[PHI_MAX_CART$iter == i,])))
-    #print(i)
-  }
-  PLANE_CART = data.frame(PLANE_CART)
-  names(PLANE_CART) = c('x_plane', 'y_plane', 'z_plane')
-  PLANE_CART$iter =c(1:ndraws)
-  
   PLANE_CART_OVERALL = data.frame(t(unlist(GET_PLANE(MAT = PHI_MAX_CART[PHI_MAX_CART$iter == 0,]))))
   names(PLANE_CART_OVERALL) = c('x_plane', 'y_plane', 'z_plane')
   PLANE_CART_OVERALL$iter =0
   
   ### Merge data
-  PHI_MAX_CART = merge(PHI_MAX_CART, rbind(PLANE_CART[,c('iter','x_plane', 'y_plane', 'z_plane')],
-                                           PLANE_CART_OVERALL[,c('iter','x_plane', 'y_plane', 'z_plane')]), by = c('iter'))
+  PHI_MAX_CART = merge(PHI_MAX_CART, rbind(PLANE_CART_OVERALL[,c('iter','x_plane', 'y_plane', 'z_plane')]), by = c('iter'))
   
   ######################################################################
   ### Project Data to Best Fitting Plane and Estimate Ellipse Center ###
   ######################################################################
-  
-  ELLIPSE_CENTERS = matrix(NA, ncol = 3, nrow = ndraws)
   if(ELLIPSE){
-  for(i in c(1:ndraws)){
-    if(JACKDRAW){
-     ELLIPSE_CENTERS[i,] = as.vector(unlist(GET_CENTER_LACKOFFIT(MAT = PHI_MAX_CART[PHI_MAX_CART$iter == i,])))
+    if(DRAW){
+      ELLIPSE_CENTER_OVERALL = as.vector(unlist(GET_CENTER_LACKOFFIT(MAT = PHI_MAX_CART[PHI_MAX_CART$iter == 0,])))
     }else{
-     ELLIPSE_CENTERS[i,] =as.vector(unlist(GET_CENTER(MAT = PHI_MAX_CART[PHI_MAX_CART$iter == i,])))
+      ELLIPSE_CENTER_OVERALL = as.vector(unlist(GET_CENTER(MAT = PHI_MAX_CART[PHI_MAX_CART$iter == 0,])))
     }
-  }
-  ELLIPSE_CENTER_OVERALL = as.vector(unlist(GET_CENTER(MAT = PHI_MAX_CART[PHI_MAX_CART$iter == 0,])))
   }else{
-    for(i in c(1:ndraws)){
-      if(JACKDRAW){
-        ELLIPSE_CENTERS[i,] = as.vector(unlist(GET_CENTER_CIRCULAR_LACKOFFIT(MAT = PHI_MAX_CART[PHI_MAX_CART$iter == i,])))
-      }else{
-        ELLIPSE_CENTERS[i,] =as.vector(unlist(GET_CENTER_CIRCULAR(MAT = PHI_MAX_CART[PHI_MAX_CART$iter == i,])))
-      }
-    }
     ELLIPSE_CENTER_OVERALL = as.vector(unlist(GET_CENTER_CIRCULAR(MAT = PHI_MAX_CART[PHI_MAX_CART$iter == 0,])))
   }
-  
-  #test = apply(as.matrix(c(1:ndraws)), 1, FUN = function(x,MAT){as.vector(unlist(GET_CENTER(MAT = MAT[MAT$iter == x,])))}, MAT = PHI_MAX_CART)
-  
-  ELLIPSE_CENTERS = data.frame(ELLIPSE_CENTERS)
-  names(ELLIPSE_CENTERS) = c('x_center', 'y_center', 'z_center')
-  
   ELLIPSE_CENTER_OVERALL = data.frame(t(ELLIPSE_CENTER_OVERALL))
   names(ELLIPSE_CENTER_OVERALL) = c('x_center', 'y_center', 'z_center')
   
@@ -420,10 +406,6 @@ Estimate_Ribbon_Center = function(model_input, WORKING_CENTER, ndraws = 1000, JA
   ##########################
   ### Convert to Lat/Lon ###
   ##########################
-  ELLIPSE_CENTERS_SPHERICAL = data.frame(cart2sph(as.matrix(ELLIPSE_CENTERS)))
-  ELLIPSE_CENTERS_SPHERICAL$lon = ELLIPSE_CENTERS_SPHERICAL[,1]*180/pi + 180
-  ELLIPSE_CENTERS_SPHERICAL$ecliptic_lat= (ELLIPSE_CENTERS_SPHERICAL[,2])*180/pi
-  
   ELLIPSE_CENTERS_SPHERICAL_OVERALL = data.frame(t(cart2sph(as.matrix(ELLIPSE_CENTER_OVERALL))))
   ELLIPSE_CENTERS_SPHERICAL_OVERALL$lon = ELLIPSE_CENTERS_SPHERICAL_OVERALL[,1]*180/pi + 180
   ELLIPSE_CENTERS_SPHERICAL_OVERALL$ecliptic_lat= (ELLIPSE_CENTERS_SPHERICAL_OVERALL[,2])*180/pi
@@ -433,8 +415,9 @@ Estimate_Ribbon_Center = function(model_input, WORKING_CENTER, ndraws = 1000, JA
   PEAKS_SPHERICAL$ecliptic_lat= (PEAKS_SPHERICAL[,2])*180/pi
   PEAKS_SPHERICAL$iter = PHI_MAX_CART$iter
   
-  return(list(ELLIPSE = ELLIPSE_CENTERS_SPHERICAL[,c('lon', 'ecliptic_lat')], OVERALL = ELLIPSE_CENTERS_SPHERICAL_OVERALL[,c('lon', 'ecliptic_lat')],
-              PEAKS = PEAKS_SPHERICAL[,c('lon', 'ecliptic_lat', 'iter')]))
+  return(list(ELLIPSE = ELLIPSE_CENTERS_SPHERICAL_OVERALL[,c('lon', 'ecliptic_lat')], OVERALL = ELLIPSE_CENTERS_SPHERICAL_OVERALL[,c('lon', 'ecliptic_lat')],
+              PEAKS = PEAKS_SPHERICAL[,c('lon', 'ecliptic_lat', 'iter')])) 
+  
 }
 
 
