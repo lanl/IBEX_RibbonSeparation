@@ -6,7 +6,7 @@ Code associated with IBEX ribbon separation method in Beesley et al. (2023) as p
 
 NASA’s Interstellar Boundary Explorer (IBEX) satellite collects data on energetic neutral atoms (ENAs) that can provide insight into the heliosphere boundary between our solar system and interstellar space. From these data, researchers construct maps of the ENA intensities (often, expressed in terms of flux) observed by latitude and longitude. The ENA flux observed in these maps is believed to come from at least two distinct sources: one source which manifests as a ribbon of concentrated ENA flux and one source (or possibly several) that manifest as smoothly-varying globally-distributed flux (GDF). Each ENA source type and its corresponding ENA intensity map is of separate scientific interest.
 
-This code demonstrates the ribbon separation method proposed in Beesley et al. (2023). This method takes a pre-make ENA intensity or flux map and corresponding uncertainties as the input and outputs a ribbon/GDF partitioned version of this same map with corresponding standard errors, which propagate uncertainty in both the input map and uncertainty in the map partitioning. Beesley et al. (2023) defines a two-stage separation algorithm, where the first stage defines a ribbon "mask" region (i.e., a region possibly containing ribbon flux) and the second stage predicts the GDF flux underneath the ribbon in the mask region. This separation procedure is repeated multiple times for a given input map, and the final separation is obtained as a weighted combination of the best 25% of separations according to a goodness-of-separation heuristic. This code also implements the ribbon center estimation algorithm proposed in Beesley et al. (2023).
+This code demonstrates the ribbon separation method proposed in Beesley et al. (2023). This method takes a pre-make ENA intensity or flux map and corresponding uncertainties as the input and outputs a ribbon/GDF partitioned version of this same map. Beesley et al. (2023) defines a two-stage separation algorithm, where the first stage defines a ribbon "mask" region (i.e., a region possibly containing ribbon flux) and the second stage predicts the GDF flux underneath the ribbon in the mask region. This separation procedure is repeated multiple times for a given input map, and the final separation is obtained as a weighted combination of the best 25% of separations according to a goodness-of-separation heuristic. This code also implements the ribbon center estimation algorithm proposed in Beesley et al. (2023). Uncertainty estimation code is not provided, but the results of applying the Monte Carlo-based uncertainty estimation to simulated and real IBEX data are provided. 
 
 ## System requirements
 
@@ -31,7 +31,7 @@ NOTE: Anyone wishing to use these maps **for space science** (not statistical me
 
 ## Instructions for use
 
-After R is installed, run **plot_simulated.R** to reproduce many simulated data results, or run **plot_realdata.R** to reproduce all of the real data results in the manuscript and more. Users wishing to reproduce the ribbon separations stored in **output_isoc_xx.csv** and/or **output_theseus_xx.csv** may run **run_separations_isoc.R** and/or **run_separations_theseus.R**. Users will need to reset the "current_directory" file path in the **run_separations_xx.R** scripts. 
+After R is installed, run **plot_simulated.R** to reproduce many simulated data results, or run **plot_realdata.R** to reproduce all of the real data results in the manuscript and more. Users wishing to reproduce the ribbon separations stored in **output_isoc_xx.csv** and/or **output_theseus_xx.csv** may run **run_separations_isoc.R** and/or **run_separations_theseus.R**. 
 
 ## Input Data Details
 
@@ -76,7 +76,7 @@ After R is installed, run **plot_simulated.R** to reproduce many simulated data 
 - input_data_se: standard error of ENA rate in the input data, provided alongside input data
 - truth_gdf: simulation truth GDF-only ENA rate
 - truth_ribbon: simulation truth ribbon-only ENA rate
-- ESA: ESA (2-5) of real data map used to generate the simulated binned data structure used by Thesesus. Equals "noesa" for simulation truth maps (i.e., not estimated by Theseus).
+- ESA: ESA (2-6) of real data map used to generate the simulated binned data structure used by Thesesus. Equals "noesa" for simulation truth maps (i.e., not estimated by Theseus).
 - MAP_CLASS: simulated ribbon profile associated with map (weakscattering, spatialretention, or varyingprofile)
 - MAP_STAT: indicates were map corresponds to simulation truth, a Theseus map estimate using simulated data with standard follow-up times, or a Theseus map estimate using simulated data with triple the observed data follow-up times (truth, amountstandard, or amount3x)
 
