@@ -4,7 +4,7 @@
 ###########################################
 ###########################################
 
-current_directory = '/Users/lbeesley/Desktop/Github_IBEX_RibbonSep'
+current_directory = dirname(rstudioapi::getSourceEditorContext()$path)
 
 #########################
 ### Read in Libraries ###
@@ -39,7 +39,7 @@ if(!dir.exists(paste0(current_directory,'/Plots/RealData'))){
 #############################
 ### Unzip files as needed ###
 #############################
-
+library(GEOquery)
 if(!file.exists(paste0(current_directory, '/output_theseus_ecliptic.csv'))){
   gunzip(filename =paste0(current_directory, '/output_theseus_ecliptic.gz'), destname = paste0(current_directory, '/output_theseus_ecliptic.csv'))
 }
@@ -81,6 +81,23 @@ THESEUS_RC$azimuthal_discrete = THESEUS_RC$lon
 THESEUS_RC$polar_discrete = THESEUS_RC$lat+90
 ISOC_RC$azimuthal_discrete = ISOC_RC$lon
 ISOC_RC$polar_discrete = ISOC_RC$lat+90
+
+
+### Convert ISOC Flux Maps to ENA Rates
+Gj_triples = c(0.00013, 0.00037, 0.00073, 0.0014, 0.0025, 0.0042)
+Gj_doubles = c(0.00031, 0.00085, 0.0015, 0.0029, 0.0045, 0.0071)
+Ej = c(0.45, 0.71, 1.10, 1.74, 2.73, 4.29)
+ISOC_ECLIPTIC$est_gdf = ISOC_ECLIPTIC$est_gdf*Gj_triples[ISOC_ECLIPTIC$ESA]*Ej[ISOC_ECLIPTIC$ESA]
+ISOC_ECLIPTIC$est_ribbon = ISOC_ECLIPTIC$est_ribbon*Gj_triples[ISOC_ECLIPTIC$ESA]*Ej[ISOC_ECLIPTIC$ESA]
+ISOC_ECLIPTIC$se_gdf = ISOC_ECLIPTIC$se_gdf*Gj_triples[ISOC_ECLIPTIC$ESA]*Ej[ISOC_ECLIPTIC$ESA]
+ISOC_ECLIPTIC$se_ribbon = ISOC_ECLIPTIC$se_ribbon*Gj_triples[ISOC_ECLIPTIC$ESA]*Ej[ISOC_ECLIPTIC$ESA]
+ISOC_ECLIPTIC$input_data = ISOC_ECLIPTIC$est_gdf + ISOC_ECLIPTIC$est_ribbon
+
+
+ISOC_RC$est_gdf = ISOC_RC$est_gdf*Gj_triples[ISOC_RC$ESA]*Ej[ISOC_RC$ESA]
+ISOC_RC$est_ribbon = ISOC_RC$est_ribbon*Gj_triples[ISOC_RC$ESA]*Ej[ISOC_RC$ESA]
+ISOC_RC$se_gdf = ISOC_RC$se_gdf*Gj_triples[ISOC_RC$ESA]*Ej[ISOC_RC$ESA]
+ISOC_RC$se_ribbon = ISOC_RC$se_ribbon*Gj_triples[ISOC_RC$ESA]*Ej[ISOC_RC$ESA]
 
 
 ###########################################
@@ -149,31 +166,35 @@ dev.off()
 ###################################
 ISOC_SUB = ISOC_ECLIPTIC[ISOC_ECLIPTIC$Time_Group == '2010' & ISOC_ECLIPTIC$ESA == 5,c('ecliptic_lon_center', 'lat', 'input_data')]
 THESEUS_SUB = THESEUS_ECLIPTIC[THESEUS_ECLIPTIC$Time_Group == '2010A' & THESEUS_ECLIPTIC$ESA == 5,c('ecliptic_lon_center', 'lat', 'input_data')]
+# LIMITS = c(0,max(c(THESEUS_SUB$input_data, ISOC_SUB$input_data), na.rm=T))
+LIMITS = c(0,0.35)
 p0 = ggplot(ISOC_SUB)+
   geom_tile(aes(x=ecliptic_lon_center, y=lat, fill = input_data, color = input_data))+
   theme_classic()+
   xlab('Longitude')+ylab('Latitude')+
   labs(title = 'ISOC')+
-  theme(legend.position = 'bottom', legend.key.size = unit(1.2,'cm'), axis.line.x = element_blank())+
-  scale_color_gradientn('ENAs/sec',colors = ibex_palette$hex ,na.value = 'black' )+
-  scale_fill_gradientn('ENAs/sec',colors = ibex_palette$hex ,na.value = 'black' )+
+  #theme(legend.position = 'bottom', legend.key.size = unit(1.2,'cm'), axis.line.x = element_blank())+
+  scale_color_gradientn('ENAs/sec',colors = ibex_palette$hex ,na.value = 'black',limits = LIMITS,oob = scales::oob_squish )+
+  scale_fill_gradientn('ENAs/sec',colors = ibex_palette$hex ,na.value = 'black' ,limits = LIMITS,oob = scales::oob_squish )+
   scale_x_reverse(expand = c(0,0), breaks = new_360, labels = orig_360)+
   scale_y_continuous(expand = c(0,0))+
   theme(panel.background = element_rect(fill = NA, color = "black"))+
-  coord_fixed(ratio = 1, clip = 'on', xlim=c(360,1), ylim = c(-89,89))
+  coord_fixed(ratio = 1, clip = 'on', xlim=c(360,1), ylim = c(-89,89))+
+  theme(legend.position = 'none')
 p1 = ggplot(THESEUS_SUB)+
   geom_tile(aes(x=ecliptic_lon_center, y=lat, fill = input_data, color = input_data))+
   theme_classic()+
   xlab('Longitude')+ylab('Latitude')+
-  theme(legend.position = 'bottom', legend.key.size = unit(1.2,'cm'), axis.line.x = element_blank())+
+  #theme(legend.position = 'bottom', legend.key.size = unit(1.2,'cm'), axis.line.x = element_blank())+
   labs(title = 'Theseus')+
-  scale_color_gradientn('ENAs/sec',colors = ibex_palette$hex ,na.value = 'black' )+
-  scale_fill_gradientn('ENAs/sec',colors = ibex_palette$hex ,na.value = 'black' )+
+  scale_color_gradientn('ENAs/sec',colors = ibex_palette$hex ,na.value = 'black',limits = LIMITS ,oob = scales::oob_squish )+
+  scale_fill_gradientn('ENAs/sec',colors = ibex_palette$hex ,na.value = 'black' ,limits = LIMITS,oob = scales::oob_squish )+
   scale_x_reverse(expand = c(0,0), breaks = new_360, labels = orig_360)+
   scale_y_continuous(expand = c(0,0))+
   theme(panel.background = element_rect(fill = NA, color = "black"))+
-  coord_fixed(ratio = 1, clip = 'on', xlim=c(360,0), ylim = c(-89,89))
-p3 = ggpubr::ggarrange(p0,p1, ncol = 2, common.legend=F)
+  coord_fixed(ratio = 1, clip = 'on', xlim=c(360,0), ylim = c(-89,89))+
+  theme(legend.position = 'right')
+p3 = ggpubr::ggarrange(p0,p1, ncol = 2, common.legend=F, heights = c(1,1), widths = c(1,1.22))
 pdf(file = paste0(current_directory, '/Plots/RealData/Compare_2010.pdf'), width = 10, height = 5)
 p3
 dev.off()
@@ -288,8 +309,8 @@ ggsave(p3,filename = paste0(current_directory, '/Plots/RealData/ISOC_ESA4.pdf'),
 ### ISOC Yearly Separations ### 
 ###############################
 for(time in unique(ISOC_ECLIPTIC$Time_Group)){
-  ISOC_SUB = ISOC_ECLIPTIC[ISOC_ECLIPTIC$Time_Group == time,c('ecliptic_lon_center', 'lat', 'est_gdf','est_ribbon','input_data','ESA')]
-  TO_PLOT = rbind(data.frame(ISOC_SUB[,c('lat', 'ecliptic_lon_center', 'ESA')], ena_rate = ISOC_SUB$input_data, Type = 'Total'),
+  ISOC_SUB = ISOC_ECLIPTIC[ISOC_ECLIPTIC$Time_Group == time,c('ecliptic_lon_center', 'lat', 'est_gdf','est_ribbon','ESA')]
+  TO_PLOT = rbind(data.frame(ISOC_SUB[,c('lat', 'ecliptic_lon_center', 'ESA')], ena_rate = ISOC_SUB$est_ribbon+ISOC_SUB$est_gdf, Type = 'Total'),
                   data.frame(ISOC_SUB[,c('lat', 'ecliptic_lon_center', 'ESA')], ena_rate = ISOC_SUB$est_ribbon, Type = 'Ribbon'),
                   data.frame(ISOC_SUB[,c('lat', 'ecliptic_lon_center', 'ESA')], ena_rate = ISOC_SUB$est_gdf, Type = 'GDF'))
   TO_PLOT$Type = factor(TO_PLOT$Type, levels = c('Total', 'Ribbon', 'GDF'))
@@ -471,6 +492,12 @@ p3 = ggpubr::ggarrange(p1,p2, ncol = 2, nrow = 1, common.legend = T)
 ggsave(p3,filename = paste0(current_directory, '/Plots/RealData/Theseus_WidthSkew.pdf'), width = 10, height = 4)
 
 aggregate(k_width~ESA,FUN = median, data = THESEUS_WIDTHS)
+# ESA k_width
+# 1   2    25.0
+# 2   3    19.0
+# 3   4    15.5
+# 4   5    23.0
+# 5   6    31.5
 
 
 
@@ -535,6 +562,14 @@ ggsave(p3,filename = paste0(current_directory, '/Plots/RealData/ISOC_WidthSkew.p
 
 
 
+aggregate(k_width~ESA,FUN = median, data = ISOC_WIDTHS)
+# ESA k_width
+# 1   2    20.0
+# 2   3    20.5
+# 3   4    20.5
+# 4   5    24.0
+# 5   6    27.0
+
 
 
 ############################
@@ -596,10 +631,14 @@ p2 = ggplot(TEMP)+
   scale_x_reverse(expand = c(0,0))+
   geom_line(aes(x=ecliptic_lon, y=ecliptic_lat, group=ecliptic_lat), color = I('white'), data = horizontallinesdf, alpha = 0.7, size = 0.2)+
   geom_vline(xintercept = seq(0.0001,360-0.0001,length.out = 13), color = 'white', alpha = 0.7, size = 0.2)
-
+p3 = get_legend(ggplot(TEMP)+
+                  geom_tile(aes(x=ecliptic_lon_center, y=lat, fill = as.numeric(est_gdf)))+
+                  scale_fill_gradientn('ENA Rate',colors = ibex_palette$hex ,limits = c(0,max(TEMP$input_data)), na.value = 'black' )+
+                  theme(legend.position = 'top', legend.key.width = unit(1.5, "cm")))
 ggsave(p0,file = paste0(current_directory, '/Plots/RealData/Theseus_ExTotal.png'), width = 4, height = 3)
 ggsave(p1,file = paste0(current_directory, '/Plots/RealData/Theseus_ExRibbon.png'), width = 4, height = 3)
 ggsave(p2,file = paste0(current_directory, '/Plots/RealData/Theseus_ExResidual.png'), width = 4, height = 3)
+ggsave(p3,file = paste0(current_directory, '/Plots/RealData/Theseus_ExLegend.png'), width = 4, height = 2)
 
 
 
@@ -627,14 +666,62 @@ p0 = ggplot(TEMP)+
 ggsave(p0,file = paste0(current_directory, '/Plots/RealData/Theseus_ExRotated.png'), width = 4, height = 3)
 
 
+# TEMP$test = TEMP$est_ribbon_reisenfeld+TEMP$est_gdf_reisenfeld
+# TEMP = THESEUS_RC[THESEUS_RC$Time_Group == '2019A' & THESEUS_RC$ESA == 4,]
+# TEMP$test = TEMP$est_ribbon_reisenfeld+TEMP$est_gdf_reisenfeld
+# TEMP = ISOC_RC[ISOC_RC$Time_Group == '2019' & ISOC_RC$ESA == 4,]
+# TEMP$test = TEMP$est_ribbon_reisenfeld+TEMP$est_gdf_reisenfeld
+# TEMP = ISOC_ECLIPTIC[ISOC_ECLIPTIC$Time_Group == '2019' & ISOC_ECLIPTIC$ESA == 4,]
+# TEMP$test = TEMP$est_ribbon_reisenfeld+TEMP$est_gdf_reisenfeld
+
+TEMP = THESEUS_ECLIPTIC[THESEUS_ECLIPTIC$Time_Group == '2019A' & THESEUS_ECLIPTIC$ESA == 4,]
+horizontallinesdf <- expand.grid(ecliptic_lat = seq(-60,60,30),
+                                 ecliptic_lon = seq(0,360,30))
+LEVELS = round(seq(0,0.25,length.out = 5),2)
+p1 = ggplot(TEMP)+
+  geom_tile(aes(x=ecliptic_lon_center, y=lat, fill = as.numeric(est_ribbon_reisenfeld), color = as.numeric(est_ribbon_reisenfeld)))+
+  theme_classic()+
+  theme(plot.margin = margin(t=5,5,5,5, "lines")) +
+  theme(legend.direction = "horizontal") +
+  theme(legend.position = c(0.5, 1.5))+
+  xlab('')+ylab('')+
+  #labs(title = 'Ribbon Map')+
+  coord_map("mollweide", orientation = c(90,0,180), clip = "off")+
+  #scale_fill_gradientn('ENA Rate',breaks = LEVELS,colors = c('black', 'blue', 'gold', 'orange', 'red') ,limits = c(0,max(LEVELS)), na.value = 'black' )+
+  scale_fill_gradientn('ENA Rate',colors = ibex_palette$hex ,limits = c(0,max(TEMP$input_data)), na.value = 'black' )+
+  scale_color_gradientn('ENA Rate',colors = ibex_palette$hex ,limits = c(0,max(TEMP$input_data)), na.value = 'black' )+
+  theme(axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank())+
+  guides(color = 'none', fill = 'none')+
+  scale_x_reverse(expand = c(0,0))+
+  geom_line(aes(x=ecliptic_lon, y=ecliptic_lat, group=ecliptic_lat), color = I('white'), data = horizontallinesdf, alpha = 0.7, size = 0.2)+
+  geom_vline(xintercept = seq(0.0001,360-0.0001,length.out = 13), color = 'white', alpha = 0.7, size = 0.2)
+p2 = ggplot(TEMP)+
+  geom_tile(aes(x=ecliptic_lon_center, y=lat, fill = as.numeric(est_gdf_reisenfeld), color = as.numeric(est_gdf_reisenfeld)))+
+  theme_classic()+
+  theme(plot.margin = margin(t=5,5,5,5, "lines")) +
+  theme(legend.direction = "horizontal") +
+  theme(legend.position = c(0.5, 1.5))+
+  xlab('')+ylab('')+
+  #labs(title = 'GDF Map')+
+  coord_map("mollweide", orientation = c(90,0,180),clip = "off" )+
+  #scale_fill_gradientn('ENA Rate',colors = ibex_palette$hex ,limits = c(0,max(RESULTS_ECLIPTIC$data[RESULTS_ECLIPTIC$ESA == ESA])), na.value = 'black' )+
+  scale_fill_gradientn('ENA Rate',colors = ibex_palette$hex ,limits = c(0,max(TEMP$input_data)), oob = scales::oob_squish )+
+  scale_color_gradientn('ENA Rate',colors = ibex_palette$hex ,limits = c(0,max(TEMP$input_data)), oob = scales::oob_squish  )+
+  theme(axis.text = element_blank(), axis.line = element_blank(), axis.ticks = element_blank())+
+  guides(color = 'none', fill = 'none')+
+  scale_x_reverse(expand = c(0,0))+
+  geom_line(aes(x=ecliptic_lon, y=ecliptic_lat, group=ecliptic_lat), color = I('white'), data = horizontallinesdf, alpha = 0.7, size = 0.2)+
+  geom_vline(xintercept = seq(0.0001,360-0.0001,length.out = 13), color = 'white', alpha = 0.7, size = 0.2)
+
+ggsave(p1,file = paste0(current_directory, '/Plots/RealData/Theseus_ExRibbon_Reisenfeld.png'), width = 4, height = 3)
+ggsave(p2,file = paste0(current_directory, '/Plots/RealData/Theseus_ExResidual_Reisenfeld.png'), width = 4, height = 3)
 
 
 
 
-
-########################
-### Updated RC Frame ###
-########################
+################
+### RC Frame ###
+################
 DATA_TO_SEP = read.csv(paste0(current_directory, '/output_theseus_ecliptic.csv'))
 MAPS_TO_RUN = expand.grid(Time_Group = unique(DATA_TO_SEP$Time_Group),
                           ESA = unique(DATA_TO_SEP$ESA))
@@ -644,7 +731,7 @@ for(j in 1:length(MAPS_TO_RUN[,1])){
   Time_Group = MAPS_TO_RUN$Time_Group[j]
   ESA = MAPS_TO_RUN$ESA[j]
   MAP_KEY = paste0(Time_Group, '_', ESA)
-  FILENAME = paste0(current_directory,'/Theseus/Final_Separations/SeparationRCUpdated_',MAP_KEY, '.csv')
+  FILENAME = paste0(current_directory,'/Theseus/Final_Separations/SeparationRC_',MAP_KEY, '.csv')
   if(file.exists(FILENAME)){
     RESULTS2 = read.csv(FILENAME)
     RESULTS2$Time_Group = Time_Group

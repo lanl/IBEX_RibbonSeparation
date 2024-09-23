@@ -4,7 +4,7 @@
 ############################################
 ############################################
 
-current_directory = '/Users/lbeesley/Desktop/Github_IBEX_RibbonSep'
+current_directory = dirname(rstudioapi::getSourceEditorContext()$path)
 
 #########################
 ### Read in Libraries ###
@@ -29,7 +29,7 @@ if(!dir.exists(paste0(current_directory,'/Plots'))){
 #############################
 ### Unzip files as needed ###
 #############################
-
+library(GEOquery)
 if(!file.exists(paste0(current_directory, '/output_simulations_ecliptic.csv'))){
   gunzip(filename =paste0(current_directory, '/output_simulations_ecliptic.gz'), destname = paste0(current_directory, '/output_simulations_ecliptic.csv'))
 }
