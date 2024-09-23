@@ -412,7 +412,9 @@ stopCluster(cl)
 ##################################################
 ### Rotate Separations into RC Frame and Merge ###
 ##################################################
-DATA_TO_SEP = read.csv(paste0(current_directory, '/output_theseus_ecliptic.csv'))
+DATA_TO_SEP1 = read.csv(paste0(current_directory, '/output_theseus_ecliptic_part1.csv'))
+DATA_TO_SEP2 = read.csv(paste0(current_directory, '/output_theseus_ecliptic_part2.csv'))
+DATA_TO_SEP = rbind(DATA_TO_SEP1, DATA_TO_SEP2)
 MAPS_TO_RUN = expand.grid(Time_Group = unique(DATA_TO_SEP$Time_Group),
                           ESA = unique(DATA_TO_SEP$ESA))
 for(j in c(1:length(MAPS_TO_RUN[,1]))){

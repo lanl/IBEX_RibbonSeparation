@@ -40,8 +40,11 @@ if(!dir.exists(paste0(current_directory,'/Plots/RealData'))){
 ### Unzip files as needed ###
 #############################
 library(GEOquery)
-if(!file.exists(paste0(current_directory, '/output_theseus_ecliptic.csv'))){
-  gunzip(filename =paste0(current_directory, '/output_theseus_ecliptic.gz'), destname = paste0(current_directory, '/output_theseus_ecliptic.csv'))
+if(!file.exists(paste0(current_directory, '/output_theseus_ecliptic_part1.csv'))){
+  gunzip(filename =paste0(current_directory, '/output_theseus_ecliptic_part1.gz'), destname = paste0(current_directory, '/output_theseus_ecliptic_part1.csv'))
+}
+if(!file.exists(paste0(current_directory, '/output_theseus_ecliptic_part2.csv'))){
+  gunzip(filename =paste0(current_directory, '/output_theseus_ecliptic_part2.gz'), destname = paste0(current_directory, '/output_theseus_ecliptic_part2.csv'))
 }
 if(!file.exists(paste0(current_directory, '/output_theseus_ecliptic_reisenfeld.csv'))){
   gunzip(filename =paste0(current_directory, '/output_theseus_ecliptic_reisenfeld.gz'), destname = paste0(current_directory, '/output_theseus_ecliptic_reisenfeld.csv'))
@@ -58,7 +61,10 @@ if(!file.exists(paste0(current_directory, '/output_theseus_rc_reisenfeld.csv')))
 ### Read in and Merge Results ###
 #################################
 
-THESEUS_ECLIPTIC = data.frame(data.table::fread(file = paste0(current_directory,'/output_theseus_ecliptic.csv')))
+THESEUS_ECLIPTIC1 = read.csv(paste0(current_directory, '/output_theseus_ecliptic_part1.csv'))
+THESEUS_ECLIPTIC2 = read.csv(paste0(current_directory, '/output_theseus_ecliptic_part2.csv'))
+THESEUS_ECLIPTIC = rbind(THESEUS_ECLIPTIC1, THESEUS_ECLIPTIC2)
+
 THESEUS_RC = data.frame(data.table::fread(file = paste0(current_directory,'/output_theseus_rc.csv')))
 THESEUS_ECLIPTIC$input_data = THESEUS_ECLIPTIC$est_ribbon + THESEUS_ECLIPTIC$est_gdf
 THESEUS_RC$input_data = THESEUS_RC$est_ribbon + THESEUS_RC$est_gdf
