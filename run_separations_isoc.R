@@ -126,7 +126,8 @@ candidate_fits <- foreach(
     SUBSET$phi_max = as.numeric(forecast::tsclean(ts(SUBSET$phi_max)))
     PREDS_ANCHOR = Get_Loess_PHI_ANCHOR(SUBSET, span = 0.1)
     PHI_ANCHOR <<- as.vector(PREDS_ANCHOR)
- 
+    PHI_ANCHOR_STORE = PHI_ANCHOR #avoid namespace issues
+    
     #######################
     ### Get Separations ###
     #######################
@@ -140,7 +141,7 @@ candidate_fits <- foreach(
                                     THRESH = VALS$THRESH_VALS[v], 
                                     BUFFER = 1, 
                                     RIBBON_BOUNDS = VALS$BOUNDS_VALS[v], 
-                                    PEAK_ALL = data.frame(lon_new = AZIMUTHAL, lat_new = PHI_ANCHOR-90), 
+                                    PEAK_ALL = data.frame(lon_new = AZIMUTHAL, lat_new = PHI_ANCHOR_STORE-90), 
                                     THESEUS_DELINE = F, 
                                     GAMK = 15)
       RESULTS = RESULTS_LIST[[1]][,c('polar_discrete','azimuthal_discrete','gdf_final','ribbon_final','mask')]
