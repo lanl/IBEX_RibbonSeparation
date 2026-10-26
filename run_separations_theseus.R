@@ -440,12 +440,12 @@ for(j in c(1:length(MAPS_TO_RUN[,1]))){
     TEMP2 = TEMP2[order(TEMP2$lon, TEMP2$lat),]
     
     RESULTS$ena_rate = (RESULTS$se_gdf^2)
-    TEMP4 = Coord_Transform_Map(MAP =RESULTS, RIBBON_CENTER = RIBBON_CENTER, METHOD = 'Inversion', STAND_DEV = FALSE, REVERSE = T, nbreaks = 10)
+    TEMP4 = Coord_Transform_Map(MAP =RESULTS, RIBBON_CENTER = RIBBON_CENTER, METHOD = 'Inversion', STAND_DEV = FALSE, REVERSE = F, nbreaks = 10)
     TEMP4$se_gdf = sqrt(TEMP4$ena_rate)
     TEMP4 = TEMP4[order(TEMP4$lon, TEMP4$lat),]
     
     RESULTS$ena_rate = (RESULTS$se_ribbon^2)
-    TEMP5 = Coord_Transform_Map(MAP =RESULTS, RIBBON_CENTER = RIBBON_CENTER, METHOD = 'Inversion', STAND_DEV = FALSE, REVERSE = T, nbreaks = 10)
+    TEMP5 = Coord_Transform_Map(MAP =RESULTS, RIBBON_CENTER = RIBBON_CENTER, METHOD = 'Inversion', STAND_DEV = FALSE, REVERSE = F, nbreaks = 10)
     TEMP5$se_ribbon = sqrt(TEMP5$ena_rate)
     TEMP5 = TEMP5[order(TEMP5$lon, TEMP5$lat),]
 
@@ -529,12 +529,12 @@ candidate_fits <- foreach(
     TEMP2 = TEMP2[order(TEMP2$lon, TEMP2$lat),]
     
     RESULTS$ena_rate = (RESULTS$se_gdf_reisenfeld^2)
-    TEMP4 = Coord_Transform_Map(MAP =RESULTS, RIBBON_CENTER = RIBBON_CENTER, METHOD = 'Inversion', STAND_DEV = FALSE, REVERSE = T, nbreaks = 10)
+    TEMP4 = Coord_Transform_Map(MAP =RESULTS, RIBBON_CENTER = RIBBON_CENTER, METHOD = 'Inversion', STAND_DEV = FALSE, REVERSE = F, nbreaks = 10)
     TEMP4$se_gdf_reisenfeld = sqrt(TEMP4$ena_rate)
     TEMP4 = TEMP4[order(TEMP4$lon, TEMP4$lat),]
     
     RESULTS$ena_rate = (RESULTS$se_ribbon_reisenfeld^2)
-    TEMP5 = Coord_Transform_Map(MAP =RESULTS, RIBBON_CENTER = RIBBON_CENTER, METHOD = 'Inversion', STAND_DEV = FALSE, REVERSE = T, nbreaks = 10)
+    TEMP5 = Coord_Transform_Map(MAP =RESULTS, RIBBON_CENTER = RIBBON_CENTER, METHOD = 'Inversion', STAND_DEV = FALSE, REVERSE = F, nbreaks = 10)
     TEMP5$se_ribbon_reisenfeld = sqrt(TEMP5$ena_rate)
     TEMP5 = TEMP5[order(TEMP5$lon, TEMP5$lat),]
     
