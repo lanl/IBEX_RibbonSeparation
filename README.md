@@ -1,5 +1,5 @@
 # Software for Heliospheric Science: IBEX Ribbon Separation
-Code associated with IBEX ribbon separation method in Beesley et al. (2023) as part of a suite of "Software for Heliospheric Science" code. See https://github.com/lanl/Theseus for software related to 2-degree Theseus map-making using IBEX data. 
+Code associated with IBEX ribbon separation method in Beesley et al. (2026) as part of a suite of "Software for Heliospheric Science" code. See https://github.com/lanl/Theseus for software related to 2-degree Theseus map-making using IBEX data. 
 
 ---
 ## Introduction
@@ -90,7 +90,7 @@ After R is installed, run **plot_simulated.R** to reproduce many simulated data 
 
 If you use these ribbon separations or code in your research work, please cite the following paper:
 
-Lauren J. Beesley, Dave Osthus, Kelly R. Moran, Madeline A. Ausdemore, Grant David Meadors,  Thomas K. Kim, Sung Jun Noh, Nehpreet K. Walia, Paul H. Janzen, Eric J. Zirnstein, Brian P. Weaver, Daniel B. Reisenfeld. Statistical methods for partitioning ribbon and globally-distributed flux using data from the Interstellar Boundary Explorer. [Under consideration at JASA Applications and Case Studies](https://arxiv.org/abs/2302.03089).
+Lauren J. Beesley, Dave Osthus, Kelly R. Moran, Madeline A. Ausdemore, Grant David Meadors,  Thomas K. Kim, Sung Jun Noh, Nehpreet K. Walia, Paul H. Janzen, Eric J. Zirnstein, Brian P. Weaver, Daniel B. Reisenfeld. Statistical methods for partitioning ribbon and globally-distributed flux using data from the Interstellar Boundary Explorer. Journal of the American Statistical Association: Applications and Case Studies. (2026) [Link](https://doi.org/10.1080/01621459.2026.2738231).
 
 ---
 Copyright 2023 for **O4627**
