@@ -201,7 +201,7 @@ candidate_fits <- foreach(
     SUBSET$phi_max = as.numeric(forecast::tsclean(ts(SUBSET$phi_max)))
     PREDS_ANCHOR = Get_Loess_PHI_ANCHOR(SUBSET, span = 0.1)
     PHI_ANCHOR <<- as.vector(PREDS_ANCHOR)
-    
+    PHI_ANCHOR_STORE = PHI_ANCHOR #avoid namespace issues
     
     library(Matrix)
     library(R.utils)
@@ -223,7 +223,7 @@ candidate_fits <- foreach(
                                     THRESH = VALS$THRESH_VALS[v], 
                                     BUFFER = 2, 
                                     RIBBON_BOUNDS = VALS$BOUNDS_VALS[v], 
-                                    PEAK_ALL = data.frame(lon_new = AZIMUTHAL, lat_new = PHI_ANCHOR-90), 
+                                    PEAK_ALL = data.frame(lon_new = AZIMUTHAL, lat_new = PHI_ANCHOR_STORE-90), 
                                     AZI_KNOTS = 24,
                                     THESEUS_DELINE = T, 
                                     GAMK = 25)
